@@ -8,7 +8,8 @@
     }
 
     GameConsole.prototype.start = function () {
-        this.gameArea.drawCanvas();
+        this.gameArea.initCanvas();
+        this.gameArea.initComponent();
         this.interval = setInterval(this.update.bind(this), this.speed);
     };
 
@@ -31,14 +32,17 @@
       this.gameArea.component.speedY = speedY;
     };
 
-    GameConsole.prototype.pause = function () {
-      if(this.interval)
-      {
+    GameConsole.prototype.transformComponent = function () {
+      this.gameArea.transformComponent();
+    };
+
+    GameConsole.prototype.toggleStatus = function () {
+      if (this.interval) {
         clearInterval(this.interval);
         this.interval = null;
+      } else {
+        this.interval = setInterval(this.update.bind(this), this.speed);
       }
-      else
-        this.start();
     };
 
     GameConsole.prototype.update = function () {
@@ -48,26 +52,21 @@
 
       this.gameArea.updateScoreBoard();
 
-      if (this.gameArea.component.done) {
+      if (this.gameArea.isComponentDone()) {
         this.gameArea.updateMatrix();
         this.gameArea.tetris();
 
         // check game status
         this.gameOver = this.gameArea.isGameOver();
 
-        this.gameArea.initNewComponent();
+        this.gameArea.initComponent();
         this.gameArea.drawComponent();
 
         return;
       } 
 
       this.gameArea.eraseComponent();
-      this.gameArea.component.update(
-        0,
-        0 + this.gameArea.canvas.width,
-        this.gameArea.canvas.height,
-        this.gameArea.matrix
-      );
+      this.gameArea.updateComponent()
       this.gameArea.drawComponent();
     };
   
