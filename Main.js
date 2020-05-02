@@ -3,6 +3,8 @@
 
     const convasX = 0;
     const convasY = 0;
+    // needs to be divided by 15
+    // const gameAreaW = 270;
     const gameAreaW = 270;
     const gameAreaH = 500;
     const speedX = 0;

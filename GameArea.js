@@ -32,7 +32,7 @@
   };
 
   GameArea.prototype.clearCanvas = function () {
-    this.drawer.clearRect(0, 0, this.width, this.height);
+    this.drawer.clearRect(this.x, this.y, this.width, this.height);
   };
 
   GameArea.prototype.drawComponent = function () {
@@ -51,12 +51,14 @@
 
   GameArea.prototype.transformComponent = function () {
     this.eraseComponent();
-    this.component.transform(this.x, this.x + this.width, this.y + this.height, this.matrix);
+    // -1 because canvas starts from 1 but matrix from 0
+    this.component.transform(this.x, this.x + this.width - 1, this.y + this.height - 1, this.matrix);
     this.drawComponent();
   };
 
   GameArea.prototype.updateComponent = function () {
-    this.component.update(this.x, this.x + this.width, this.y + this.height, this.matrix);
+    // -1 because canvas starts from 1 but matrix from 0
+    this.component.update(this.x, this.x + this.width - 1, this.y + this.height -1 , this.matrix);
   };
 
   GameArea.prototype.updateScoreBoard = function () {
@@ -79,13 +81,13 @@
     });
   };
 
-  GameArea.prototype.tetris = function () {
-    // 1: mark tetrix states
-    let Comlength = this.component.coordinates.length;
-    let comCoordWidth = this.component.width;
+  GameArea.prototype.checkTetris = function () {
+    // mark tetrix states
+    let ComCoordlength = this.component.coordinates.length;
+    let step = this.component.width;
     let shouldUpdateRest = false;
     // loop through the Ys
-    for (let i = 0; i < Comlength; i += comCoordWidth) {
+    for (let i = 0; i < ComCoordlength; i += step) {
       let comCoordY = this.component.coordinates[i][1];
       let matrixlength = this.matrix.length;
       let tetris = true;
@@ -97,7 +99,7 @@
       }
 
       if (tetris) {
-        this.score ++;
+        this.score++;
         shouldUpdateRest = true;
         for (let k = 0; k < matrixlength; k++) {
           this.matrix[k][comCoordY] = 2;
@@ -105,16 +107,18 @@
       }
     }
 
-    // 2: update the rest of matrix
-    // from downwards
-    if (!shouldUpdateRest) return;
+    return shouldUpdateRest;
+  };
+
+  GameArea.prototype.updateTetris = function () {
+    // update the rest of matrix
     let lines = 0;
-    let matrixHeight = this.matrix[0].length - 1; // -1 because matrix height starts from 0 not 1
+    let matrixBottom = this.matrix[0].length - 1; // -1 because matrix height starts from 0 not 1
     let matrixLength = this.matrix.length;
-    for (let i = matrixHeight; i > 0; i--) {
+    for (let i = matrixBottom; i >= 0; i--) {
       if (this.matrix[0][i] === 2) {
         lines++;
-        // update all to 0   
+        // update all to 0
         for (let j = 0; j < matrixLength; j++) {
           this.matrix[j][i] = 0;
         }
@@ -122,6 +126,19 @@
         if (lines > 0) {
           // update new pos by lines
           for (let j = 0; j < matrixLength; j++) {
+            // let originalVal = this.matrix[j][i];
+            // this.matrix[j][i] = 0;
+
+            // let firstCoordYNotTaken = this.matrix[j][i + lines];
+            // if (originalVal === 1) {
+            //   while (this.matrix[j][firstCoordYNotTaken] === 0 && firstCoordYNotTaken < this.height - 1 )
+            //     firstCoordYNotTaken++;
+
+            //   if (this.matrix[j][firstCoordYNotTaken] === 1)
+            //     firstCoordYNotTaken--;
+            // }
+
+            // this.matrix[j][firstCoordYNotTaken] = originalVal;
             let originalVal = this.matrix[j][i];
             this.matrix[j][i] = 0;
             this.matrix[j][i + lines] = originalVal;
@@ -129,14 +146,25 @@
         }
       }
     }
-    // 3: update canvas
-    this.clearCanvas();
+  };
+
+  GameArea.prototype.redrawMatrix = function () {
+    let matrixLength = this.matrix.length;
+    let matrixHeight = this.matrix[0].length;
     for (let i = 0; i < matrixLength; i++) {
       for (let j = 0; j < matrixHeight; j++) {
         if (this.matrix[i][j] === 1) {
           this.drawer.fillRect(i, j, 1, 1);
         }
       }
+    }
+  };
+
+  GameArea.prototype.tetris = function () {
+    if (this.checkTetris()) {
+      this.updateTetris();
+      this.clearCanvas();
+      this.redrawMatrix();
     }
   };
 
