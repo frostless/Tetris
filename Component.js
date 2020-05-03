@@ -68,9 +68,7 @@
         // crash into other components or canvas
         // get the smallest speedX
         if (coordX + j === boundaryRight + 1 || matrix[coordX + j][coordY] === 1) {
-          if (j <= smallestSpeedX) {
             smallestSpeedX = j - 1;
-          }
         }
       }
 
@@ -89,9 +87,7 @@
         // crash into other components or canvas
         // get the smallest speedX
         if (coordX + j === boundaryLeft - 1 || matrix[coordX + j][coordY] === 1) {
-          if (j >= smallestSpeedX) {
             smallestSpeedX = j + 1;
-          }
         }
       }
 
@@ -119,11 +115,9 @@
       for (let j = 1; j <= smallestSpeedY; j++) {
         // crash into other components or canvas
         // get the smallest speedy
-        if (coordY + j === bottomY  + 1 || matrix[coordX][coordY + j] === 1) {
+        if (coordY + j === bottomY + 1 || matrix[coordX][coordY + j] === 1) {
           this.done = this.speedX === 0; // allow more horizontal manevure, more like the original game
-          if (j <= smallestSpeedY) {
-            smallestSpeedY = j - 1;
-          }
+          smallestSpeedY = j - 1;
         }
       }
 
@@ -203,9 +197,7 @@
         // crash into other components or canvas
         // get the smallest speedX
         if (coordX + j === boundaryRight + 1 || matrix[coordX + j][coordY] === 1) {
-          if (j <= smallestSpeedX) {
-            smallestSpeedX = j - 1;
-          }
+          smallestSpeedX = j - 1;
         }
       }
 
@@ -224,9 +216,7 @@
         // crash into other components or canvas
         // get the smallest speedX
         if (coordX + j === boundaryLeft - 1 || matrix[coordX + j][coordY] === 1) {
-          if (j >= smallestSpeedX) {
             smallestSpeedX = j + 1;
-          }
         }
       }
 
@@ -254,11 +244,9 @@
       for (let j = 1; j <= smallestSpeedY; j++) {
         // crash into other components or canvas
         // get the smallest speedy
-        if (coordY + j === bottomY  + 1 || matrix[coordX][coordY + j] === 1) {
+        if (coordY + j === bottomY + 1 || matrix[coordX][coordY + j] === 1) {
           this.done = this.speedX === 0; // allow more horizontal manevure, more like the original game
-          if (j <= smallestSpeedY) {
-            smallestSpeedY = j - 1;
-          }
+          smallestSpeedY = j - 1;
         }
       }
 
@@ -266,49 +254,70 @@
     this.speedY = smallestSpeedY;
   };
 
-  RetangleComponent.prototype.transform = function (boundaryLeft, boundaryRight, bottomY, matrix) {
+  RetangleComponent.prototype.transformToVertical = function (matrix) {
+    let newWidth = this.height;
+    let newHeight = this.width;
+    let oldWidth = this.width;
+    let leftBottom = this.coordinates[this.coordinates.length - this.width];
+    let newTopLeftX = leftBottom[0];
+    let newTopLeftY = leftBottom[1] - newHeight + 1; // +1 because coord starts from 0
+    let newCoordinates = [];    
+
+    // this loop #1 check if crashing other components
+    // also #2 generate new coordinates
+    // doing together for efficent purpose
+    for (let i = newTopLeftY; i < newTopLeftY + newHeight; i++) {
+      for (let j = newTopLeftX; j < newTopLeftX + oldWidth; j++) {
+        // ignore if crash into other components
+        if(matrix[j][i] === 1)
+          return;    
+          
+        if (j <= newTopLeftX + newWidth - 1) 
+          newCoordinates.push([j, i]);
+      }
+    }
+    this.coordinates = newCoordinates;
+    this.width = newWidth;
+    this.height = newHeight;
+  }
+
+  RetangleComponent.prototype.transformToHorizontal = function (boundaryRight, matrix) {
     let newWidth = this.height;
     let newHeight = this.width;
     let leftBottom = this.coordinates[this.coordinates.length - this.width];
     let newTopLeftX = leftBottom[0];
+    let oldTopLeftY = this.coordinates[0][1];
+    let newTopLeftY = leftBottom[1] - newHeight + 1; // +1 because coord starts from 0
+    let newCoordinates = [];
 
-    if (this.width > this.height) {
-      let newCoordinates = [];    
-      let newTopLeftY = leftBottom[1] - newHeight + 1; // +1 because coord starts from 0
+    // ignore if crash into canvas
+    if (newTopLeftX + newWidth - 1 > boundaryRight) // -1 because width starts from 1
+      return;
 
-      for (let i = newTopLeftY; i < newTopLeftY + newHeight; i++) {
-        for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
+    // this loop #1 check if crashing other components
+    // also #2 generate new coordinates
+    // doing together for efficent purpose
+    for (let i = oldTopLeftY; i < oldTopLeftY + this.height; i++) {
+      for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
+        // ignore if crash into other components
+        if(matrix[j][i] === 1)
+          return;    
+      
+        if (i >= newTopLeftY) 
           newCoordinates.push([j, i]);
-        }
       }
-      this.coordinates = newCoordinates;
-      this.width = newWidth;
-      this.height = newHeight;
+    }
+    this.coordinates = newCoordinates;
+    this.width = newWidth;
+    this.height = newHeight;
+  }
+
+
+  RetangleComponent.prototype.transform = function (boundaryLeft, boundaryRight, bottomY, matrix) {
+    if (this.width > this.height) {
+      this.transformToVertical(matrix);
     } else {
-      let newCoordinates = [];
-      let oldTopLeftY = this.coordinates[0][1];
-      let newTopLeftY = leftBottom[1] - newHeight + 1; // +1 because coord starts from 0
-
-      // ignore if crash into canvas
-      if (newTopLeftX + newWidth - 1 >= boundaryRight) // -1 because width starts from 1
-        return;
-
-      // this loop #1 check if crashing other components
-      // also #2 generate new coordinates
-      // doing together for efficent purpose
-      for (let i = oldTopLeftY; i < oldTopLeftY + this.height; i++) {
-        for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
-          // ignore if crash into other components
-          if(matrix[j][i] === 1)
-            return;    
-        
-          if (i >= newTopLeftY) 
-            newCoordinates.push([j, i]);
-        }
-      }
-      this.coordinates = newCoordinates;
-      this.width = newWidth;
-      this.height = newHeight;
+      this.transformToHorizontal(boundaryRight, matrix);
     }
   };
 
@@ -325,8 +334,6 @@
     } else {
       return new RetangleComponent(x, y);
     }
-
-    // return new RetangleComponent(x, y);
   }
 
   window.Component = Component || {};
