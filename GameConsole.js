@@ -14,22 +14,20 @@
     };
 
     GameConsole.prototype.turnleft = function (speedX, speedY) {
-      this.gameArea.component.speedX = -speedX;
-      this.gameArea.component.speedY = speedY;
+      this.gameArea.changeCompHoriSpeed(-speedX, speedY)
     };
 
     GameConsole.prototype.turnRight = function (speedX,speedY) {
-      this.gameArea.component.speedX = speedX;
-      this.gameArea.component.speedY = speedY;
+      this.gameArea.changeCompHoriSpeed(speedX, speedY)
     };
 
     GameConsole.prototype.accelerate = function (speedY) {
-      this.gameArea.component.speedY = speedY;
+      this.gameArea.changeCompVertSpeed(speedY)
     };
 
     GameConsole.prototype.reverSpeed = function (speedX, speedY) {
-      this.gameArea.component.speedX = speedX;
-      this.gameArea.component.speedY = speedY;
+      this.gameArea.changeCompHoriSpeed(speedX)
+      this.gameArea.changeCompVertSpeed(speedY)
     };
 
     GameConsole.prototype.transformComponent = function () {

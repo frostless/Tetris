@@ -61,8 +61,17 @@
     this.component.update(this.x, this.x + this.width - 1, this.y + this.height -1 , this.matrix);
   };
 
+  GameArea.prototype.changeCompHoriSpeed = function (speedX, speedY) {
+    this.component.changeHoriSpeed(speedX, speedY)
+  };
+
+  GameArea.prototype.changeCompVertSpeed = function (speedY) {
+    this.component.changeVertSpeed(speedY)
+  };
+
   GameArea.prototype.updateScoreBoard = function () {
-    this.drawer.clearRect(this.x + this.width - 60, this.y, 100, 100);
+    // todo: bug if compinent overlapped, put it outside later
+    this.drawer.clearRect(this.x + this.width - 60, this.y, 100, 25);
     this.drawer.fillText('Score: ' + this.score, this.x + this.width - 60, 20);
   };
 
@@ -71,7 +80,7 @@
   };
 
   GameArea.prototype.isGameOver = function () {
-    return this.component.coordinates[0][1] <= 0;
+    return this.component.isGameOver(this.y);
   };
 
   GameArea.prototype.updateMatrix = function () {
@@ -83,16 +92,15 @@
 
   GameArea.prototype.checkTetris = function () {
     // mark tetrix states
-    let ComCoordlength = this.component.coordinates.length;
-    let step = this.component.width;
+    let topCoordY = this.component.getTopCoordY();
+    let lowerBound = topCoordY + this.component.height;
     let shouldUpdateRest = false;
     // loop through the Ys
-    for (let i = 0; i < ComCoordlength; i += step) {
-      let comCoordY = this.component.coordinates[i][1];
+    for (let i = topCoordY; i < lowerBound; i ++) {
       let matrixlength = this.matrix.length;
       let tetris = true;
       for (let j = 0; j < matrixlength; j++) {
-        if (this.matrix[j][comCoordY] === 0) {
+        if (this.matrix[j][i] === 0) {
           tetris = false;
           break;
         }
@@ -101,8 +109,8 @@
       if (tetris) {
         this.score++;
         shouldUpdateRest = true;
-        for (let k = 0; k < matrixlength; k++) {
-          this.matrix[k][comCoordY] = 2;
+        for (let j = 0; j < matrixlength; j++) {
+          this.matrix[j][i] = 2;
         }
       }
     }
@@ -126,19 +134,6 @@
         if (lines > 0) {
           // update new pos by lines
           for (let j = 0; j < matrixLength; j++) {
-            // let originalVal = this.matrix[j][i];
-            // this.matrix[j][i] = 0;
-
-            // let firstCoordYNotTaken = this.matrix[j][i + lines];
-            // if (originalVal === 1) {
-            //   while (this.matrix[j][firstCoordYNotTaken] === 0 && firstCoordYNotTaken < this.height - 1 )
-            //     firstCoordYNotTaken++;
-
-            //   if (this.matrix[j][firstCoordYNotTaken] === 1)
-            //     firstCoordYNotTaken--;
-            // }
-
-            // this.matrix[j][firstCoordYNotTaken] = originalVal;
             let originalVal = this.matrix[j][i];
             this.matrix[j][i] = 0;
             this.matrix[j][i + lines] = originalVal;
