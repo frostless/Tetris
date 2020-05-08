@@ -50,6 +50,9 @@
   };
 
   GameArea.prototype.transformComponent = function () {
+    if(this.component.done)
+      return;
+      
     this.eraseComponent();
     // -1 because canvas starts from 1 but matrix from 0
     this.component.transform(this.x, this.x + this.width - 1, this.y + this.height - 1, this.matrix);
@@ -92,7 +95,8 @@
 
   GameArea.prototype.checkTetris = function () {
     // mark tetrix states
-    let topCoordY = this.component.getTopCoordY();
+    let topCoord = this.component.getTopLeftCoord();
+    let topCoordY = topCoord[1];
     let lowerBound = topCoordY + this.component.height;
     let shouldUpdateRest = false;
     // loop through the Ys

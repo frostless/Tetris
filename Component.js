@@ -22,8 +22,24 @@
     })();
   }
 
-  SquareComponent.prototype.getTopCoordY = function () {
-    return this.coordinates[0][1];
+  SquareComponent.prototype.getTopLeftCoord = function () {
+    return this.coordinates[0];
+  }
+
+  SquareComponent.prototype.getTopRightCoord = function () {
+    let step = this.width;
+    return this.coordinates[step - 1];
+  }
+
+  SquareComponent.prototype.getBottomLeftCoord = function () {
+    let step = this.width;
+    let length = this.coordinates.length;
+    return this.coordinates[length - step];
+  }
+
+  SquareComponent.prototype.getBottomRightCoord = function () {
+    let length = this.coordinates.length;
+    return this.coordinates[length - 1];
   }
 
   SquareComponent.prototype.update = function (boundaryLeft, boundaryRight, bottomY, matrix) {
@@ -172,8 +188,24 @@
     })();
   }
 
-  RectangleComponent.prototype.getTopCoordY = function () {
-    return this.coordinates[0][1];
+  RectangleComponent.prototype.getTopLeftCoord = function () {
+    return this.coordinates[0];
+  }
+
+  RectangleComponent.prototype.getTopRightCoord = function () {
+    let step = this.width;
+    return this.coordinates[step - 1];
+  }
+
+  RectangleComponent.prototype.getBottomLeftCoord = function () {
+    let step = this.width;
+    let length = this.coordinates.length;
+    return this.coordinates[length - step];
+  }
+
+  RectangleComponent.prototype.getBottomRightCoord = function () {
+    let length = this.coordinates.length;
+    return this.coordinates[length - 1];
   }
 
   RectangleComponent.prototype.update = function (boundaryLeft, boundaryRight, bottomY, matrix) {
@@ -270,13 +302,14 @@
     });
   };
 
-  RectangleComponent.prototype.transformToVertical = function (matrix) {
+  RectangleComponent.prototype.transformToVertical = function (matrix, forceTransform) {
+    forceTransform = forceTransform || false; 
     let newWidth = this.height;
     let newHeight = this.width;
     let oldWidth = this.width;
-    let leftBottom = this.coordinates[this.coordinates.length - this.width];
-    let newTopLeftX = leftBottom[0];
-    let newTopLeftY = leftBottom[1] - newHeight + 1; // +1 because coord starts from 0
+    let bottomLeft = this.getBottomLeftCoord();
+    let newTopLeftX = bottomLeft[0];
+    let newTopLeftY = bottomLeft[1] - newHeight + 1; // +1 because coord starts from 0
     let newCoordinates = [];    
 
     // this loop #1 check if crashing other components
@@ -285,8 +318,8 @@
     for (let i = newTopLeftY; i < newTopLeftY + newHeight; i++) {
       for (let j = newTopLeftX; j < newTopLeftX + oldWidth; j++) {
         // ignore if crash into other components
-        if(matrix[j][i] === 1)
-          return;    
+        if(!forceTransform && matrix[j][i] === 1)
+          return false;
           
         if (j <= newTopLeftX + newWidth - 1) 
           newCoordinates.push([j, i]);
@@ -295,19 +328,22 @@
     this.coordinates = newCoordinates;
     this.width = newWidth;
     this.height = newHeight;
+
+    return true;
   }
 
-  RectangleComponent.prototype.transformToHorizontal = function (boundaryRight, matrix) {
+  RectangleComponent.prototype.transformToHorizontal = function (boundaryRight, matrix, forceTransform) {
+    forceTransform = forceTransform || false; 
     let newWidth = this.height;
     let newHeight = this.width;
-    let leftBottom = this.coordinates[this.coordinates.length - this.width];
-    let newTopLeftX = leftBottom[0];
+    let bottomLeft = this.getBottomLeftCoord();
+    let newTopLeftX = bottomLeft[0];
     let oldTopLeftY = this.coordinates[0][1];
-    let newTopLeftY = leftBottom[1] - newHeight + 1; // +1 because coord starts from 0
+    let newTopLeftY = bottomLeft[1] - newHeight + 1; // +1 because coord starts from 0
     let newCoordinates = [];
 
     // ignore if crash into canvas
-    if (newTopLeftX + newWidth - 1 > boundaryRight) // -1 because width starts from 1
+    if (!forceTransform && newTopLeftX + newWidth - 1 > boundaryRight) // -1 because width starts from 1
       return;
 
     // this loop #1 check if crashing other components
@@ -316,8 +352,7 @@
     for (let i = oldTopLeftY; i < oldTopLeftY + this.height; i++) {
       for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
         // ignore if crash into other components
-        if(matrix[j][i] === 1)
-          return;    
+        if (!forceTransform && matrix[j][i] === 1) return false;
       
         if (i >= newTopLeftY) 
           newCoordinates.push([j, i]);
@@ -326,13 +361,16 @@
     this.coordinates = newCoordinates;
     this.width = newWidth;
     this.height = newHeight;
+
+    return true;
   }
 
-  RectangleComponent.prototype.transform = function (boundaryLeft, boundaryRight, bottomY, matrix) {
+  RectangleComponent.prototype.transform = function (boundaryLeft, boundaryRight, bottomY, matrix, forceTransform) {
+    forceTransform = forceTransform || false; 
     if (this.width > this.height) {
-      this.transformToVertical(matrix);
+      return this.transformToVertical(matrix, forceTransform);
     } else {
-      this.transformToHorizontal(boundaryRight, matrix);
+      return this.transformToHorizontal(boundaryRight, matrix, forceTransform);
     }
   };
 
@@ -363,12 +401,40 @@
     })();
   }
 
-  HalfCrossComponent.prototype.getTopCoordY = function () {
-    return Math.min(
-      this.squareComponent.getTopCoordY(),
-      this.rectangleComponent.getTopCoordY()
-    );
+  HalfCrossComponent.prototype.getTopLeftCoord = function () {
+    let squareTopleftCoord = this.squareComponent.getTopLeftCoord();
+    let rectangleTopLeftcoord = this.rectangleComponent.getTopLeftCoord();
+
+    return squareTopleftCoord[1] < rectangleTopLeftcoord[1]
+      ? squareTopleftCoord
+      : rectangleTopLeftcoord;
+  };
+
+  HalfCrossComponent.prototype.getTopRightCoord = function () {
+    let squareTopRightCoord = this.squareComponent.getTopRightCoord();
+    let rectangleTopRightcoord = this.rectangleComponent.getTopRightCoord();
+
+    return squareTopRightCoord[1] < rectangleTopRightcoord[1]
+      ? squareTopRightCoord
+      : rectangleTopRightcoord;
   }
+
+  HalfCrossComponent.prototype.getBottomLeftCoord = function () {
+    // let squareBottomLeftCCoord = this.squareComponent.getBottomLeftCoord();
+    // let rectangleBottomLeftCcoord = this.rectangleComponent.getBottomLeftCoord();
+
+    // return squareBottomLeftCCoord[0] < rectangleBottomLeftCcoord[0]
+    //   ? squareBottomLeftCCoord
+    //   : rectangleBottomLeftCcoord;
+  }
+
+  HalfCrossComponent.prototype.getBottomRightCoord = function () {
+    // let squareBottomRightCCoord = this.squareComponent.getBottomRightCoord();
+    // let rectangleBottomRightCcoord = this.rectangleComponent.getBottomRightCoord();
+    // return squareBottomRightCCoord[0] > rectangleBottomRightCcoord[0]
+    //   ? squareBottomRightCCoord
+    //   : rectangleBottomRightCcoord;
+  };
 
   HalfCrossComponent.prototype.update = function (boundaryLeft, boundaryRight, bottomY, matrix) {
     let newSpeedX = 0;
@@ -422,6 +488,75 @@
     return this.squareComponent.isGameOver(boundaryTop) || this.rectangleComponent.isGameOver(boundaryTop)
   }
 
+  HalfCrossComponent.prototype.rectangleToLeftTransform = function (boundaryLeft, boundaryRight, bottomY, matrix) {
+    let coord = this.rectangleComponent.getBottomLeftCoord();
+    let coordX = coord[0];
+    let rightBound = coordX + this.squareComponent.width;
+    let coordY = coord[0] - this.squareComponent.height;
+    let upperBound = coordY - this.squareComponent.height * 2;
+
+    for (let i = coordX; i < rightBound; i++){
+      for (let j = coordY; j > upperBound; j--){
+        if(matrix[i][j] === 1)
+          return false;
+      }
+    }
+    return true;
+  }
+
+  HalfCrossComponent.prototype.rectangleToUpTransform = function (boundaryLeft, boundaryRight, bottomY, matrix) {
+    let coord = this.rectangleComponent.getTopLeftCoord();
+    let coordX = coord[0] + this.squareComponent.width;
+    let rightBound = coordX + this.squareComponent.width * 2;
+    let coordY = coord[1];
+    let lowerBound = coordY + this.squareComponent.height;
+
+    if (rightBound - 1 > boundaryRight) return false;
+
+    for (let i = coordX; i < rightBound; i++){
+      for (let j = coordY; j < lowerBound; j++){
+        if(matrix[i][j] === 1)
+          return false;
+      }
+    }
+    return true;
+  }
+
+  HalfCrossComponent.prototype.rectangleToRightTransform = function (boundaryLeft, boundaryRight, bottomY, matrix) {
+    let coord = this.squareComponent.getTopRightCoord();
+    let coordX = coord[0] + 1;
+    let rightBound = coordX + this.squareComponent.width;
+    let coordY = coord[1];
+    let lowerBound = coordY + this.squareComponent.height * 2;
+
+    if (lowerBound - 1 > bottomY) return false;
+
+    for (let i = coordX; i < rightBound; i++) {
+      for (let j = coordY; j < lowerBound; j++) {
+        if (matrix[i][j] === 1) return false;
+      }
+    }
+    return true;
+  }
+
+  HalfCrossComponent.prototype.rectangleToDownTransform = function (boundaryLeft, boundaryRight, bottomY, matrix) {
+    let coord = this.squareComponent.getBottomRightCoord();
+    let coordX = coord[0];
+    let leftBound = coordX - this.squareComponent.width * 2;
+    let coordY = coord[1] + 1;
+    let lowerBound = coordY + this.squareComponent.height;
+
+    // transfrom should not crash
+    if (leftBound + 1 < boundaryLeft) return false;
+
+    for (let i = coordX; i > leftBound; i--) {
+      for (let j = coordY; j < lowerBound; j++) {
+        if (matrix[i][j] === 1) return false;
+      }
+    }
+    return true;
+  }
+
   HalfCrossComponent.prototype.transform = function (boundaryLeft, boundaryRight, bottomY, matrix) {
     const squareOnTop =
       this.squareComponent.coordinates[0][1] <
@@ -447,36 +582,40 @@
 
     const offset = 2 * this.squareComponent.width;
 
-    if(squareOnTop){
-      this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
-    } else if(squareOnRight){
-      this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
-      this.rectangleComponent.coordinates.forEach((item) => {
-        item[1] -= offset;
-      });
-    } else if (squareOnBottom){
-      this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
-      this.rectangleComponent.coordinates.forEach((item) => {
-        item[0] += offset;
-        item[1] += offset;
-      });
-    } else if (squareOnLeft){
-      this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
-      this.rectangleComponent.coordinates.forEach((item) => {
-        item[0] -= offset;
-      });
+    if (squareOnTop) {
+      if (!this.rectangleToLeftTransform(boundaryLeft, boundaryRight, bottomY, matrix)) return false;
+    } else if (squareOnRight) {
+      if (!this.rectangleToUpTransform(boundaryLeft, boundaryRight, bottomY, matrix)) {
+        return false;
+      } else {
+        this.rectangleComponent.coordinates.forEach((item) => {
+          item[1] -= offset;
+        });
+      }
+    } else if (squareOnBottom) {
+      if (!this.rectangleToRightTransform(boundaryLeft, boundaryRight, bottomY, matrix)) {
+        return false;
+      } else {
+        this.rectangleComponent.coordinates.forEach((item) => {
+          item[0] += offset;
+          item[1] += offset;
+        });
+      }
+    } else if (squareOnLeft) {
+      if (!this.rectangleToDownTransform(boundaryLeft, boundaryRight, bottomY, matrix)) {
+        return false;
+      } else {
+        this.rectangleComponent.coordinates.forEach((item) => {
+          item[0] -= offset;
+        });
+      }
     }
+
+    this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix, true);
 
     const oldWidth = this.width;
     this.width = this.height;
     this.height = oldWidth;
-
-    // if (
-    //   this.rectangleComponent.coordinates[
-    //     this.rectangleComponent.coordinates.length - 1
-    //   ][1] > bottomY
-    // )
-    //   return;
 
     this.coordinates = this.squareComponent.coordinates.concat(this.rectangleComponent.coordinates);
   }
@@ -488,16 +627,16 @@
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    const int = getRandomInt(0, 2);
-    if (int === 0) {
-      return new SquareComponent(x, y);
-    } else if (int === 1)  {
-      return new RectangleComponent(x, y);
-    } else if (int === 2){
-      return new HalfCrossComponent(x, y);
-    }
+    // const int = getRandomInt(0, 2);
+    // if (int === 0) {
+    //   return new SquareComponent(x, y);
+    // } else if (int === 1)  {
+    //   return new RectangleComponent(x, y);
+    // } else if (int === 2){
+    //   return new HalfCrossComponent(x, y);
+    // }
 
-    // return new HalfCrossComponent(x, y);
+    return new HalfCrossComponent(x, y);
   }
 
   window.Component = Component || {};
