@@ -50,18 +50,23 @@
   };
 
   GameArea.prototype.transformComponent = function () {
-    if(this.component.done)
-      return;
-      
+    if (this.component.done) return;
+
     this.eraseComponent();
     // -1 because canvas starts from 1 but matrix from 0
-    this.component.transform(this.x, this.x + this.width - 1, this.y + this.height - 1, this.matrix);
+    let boundaryLeft = this.x;
+    let boundaryRight = this.x + this.width - 1;
+    let bottomY = this.y + this.height - 1;
+    this.component.transform(boundaryLeft, boundaryRight, bottomY, this.matrix);
     this.drawComponent();
-  };
+  };;
 
   GameArea.prototype.updateComponent = function () {
     // -1 because canvas starts from 1 but matrix from 0
-    this.component.update(this.x, this.x + this.width - 1, this.y + this.height -1 , this.matrix);
+    let boundaryLeft = this.x;
+    let boundaryRight = this.x + this.width - 1;
+    let bottomY = this.y + this.height - 1;
+    this.component.update(boundaryLeft, boundaryRight, bottomY, this.matrix);
   };
 
   GameArea.prototype.changeCompHoriSpeed = function (speedX, speedY) {
