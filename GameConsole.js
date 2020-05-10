@@ -10,6 +10,7 @@
     GameConsole.prototype.start = function () {
         this.gameArea.initCanvas();
         this.gameArea.initComponent();
+        this.gameArea.drawNextComponent();
         this.interval = setInterval(this.update.bind(this), this.speed);
     };
 
@@ -59,6 +60,7 @@
 
         this.gameArea.initComponent();
         this.gameArea.drawComponent();
+        this.gameArea.drawNextComponent();
 
         return;
       } 

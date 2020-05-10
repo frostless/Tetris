@@ -13,9 +13,10 @@
     const speedYAcce = 20;
     const speedYSlow = 1;
     const gameSpeed = 80;
+    const statusAreaWidth = 90;
  
-    let drawer = new Drawer(gameAreaW, gameAreaH);
-    let gameArea = new GameArea(convasX, convasY, gameAreaW, gameAreaH, drawer);
+    let drawer = new Drawer(gameAreaW, gameAreaH, statusAreaWidth);
+    let gameArea = new GameArea(convasX, convasY, gameAreaW, gameAreaH, drawer, statusAreaWidth);
     let gameConsole = new GameConsole(gameArea, gameSpeed);
 
     document.addEventListener("keydown", (event) => {
