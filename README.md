@@ -7,4 +7,4 @@ D -> Trun Right
 J -> Transform
 Enter -> Pause/Restart
 
-![](tetris demo.gif)
+![](https://github.com/frostless/Tetris/blob/master/tetris%20demo.gif?raw=true)
