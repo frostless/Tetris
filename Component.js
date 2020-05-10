@@ -1229,14 +1229,86 @@
     return this.squareComponent.isGameOver(boundaryTop) || this.rectangleComponent.isGameOver(boundaryTop)
   }
 
+  ReverseLShapeComponent.prototype.squareOnTopTransform = function (boundaryLeft, boundaryRight, bottomY, matrix) { 
+    let transform = this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
+    if(!transform)
+      return false;
+
+    return true;
+  }
+
+  ReverseLShapeComponent.prototype.squareOnRightTransform = function (boundaryLeft, boundaryRight, bottomY, matrix) { 
+    let offset = this.squareComponent.height;
+    // change coord first,revert later if transform fail
+    this.rectangleComponent.coordinates.forEach((item) => {
+      item[1] -= offset * 2;
+    });
+    let transform = this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
+    if(!transform){
+      this.rectangleComponent.coordinates.forEach((item) => {
+        item[1] += offset * 2;
+      });
+      return false;
+    }
+
+    return true;    
+  }
+
+  ReverseLShapeComponent.prototype.squareOnBottomTransform = function (boundaryLeft, boundaryRight, bottomY, matrix) { 
+    let coordY = this.squareComponent.getBottomLeftCoord()[1];
+    let lowerBound = coordY + this.squareComponent.height;
+    let offset = this.squareComponent.height;
+      // ignore if crash into canvas
+    if(lowerBound > bottomY)
+      return false;
+    // change coord first,revert later if transform fail
+    this.rectangleComponent.coordinates.forEach((item) => {
+      item[0] += offset * 2;
+      item[1] += offset * 2;
+    });
+    let transform = this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
+    if(!transform){
+      this.rectangleComponent.coordinates.forEach((item) => {
+        item[0] -= offset * 2;
+        item[1] -= offset * 2;
+      });
+      return false;
+    }
+
+    return true;
+  }
+
+  ReverseLShapeComponent.prototype.squareOnLeftTransform = function (boundaryLeft, boundaryRight, bottomY, matrix) { 
+    let coordX = this.squareComponent.getTopLeftCoord()[0];
+    let leftBound = coordX - this.squareComponent.width;
+    let offset = this.squareComponent.height;
+
+    // ignore if crash into canvas
+    if(leftBound < boundaryLeft)
+      return false;
+    // change coord first,revert later if transform fail
+    this.rectangleComponent.coordinates.forEach((item) => {
+      item[0] -= offset * 2;
+    });
+    let transform = this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
+    if(!transform){
+      this.rectangleComponent.coordinates.forEach((item) => {
+        item[0] += offset * 2;
+      });
+      return false;
+    }
+
+    return true;
+  }   
+
   ReverseLShapeComponent.prototype.transform = function (boundaryLeft, boundaryRight, bottomY, matrix) { 
+    let offset = this.squareComponent.height;
     let squareOnTop = this.squareComponent.getBottomRightCoord()[1] < this.rectangleComponent.getTopRightCoord()[1];
     let squareOnRight = this.squareComponent.getTopLeftCoord()[0] > this.rectangleComponent.getTopRightCoord()[0];
     let squareOnBottom = this.squareComponent.getTopLeftCoord()[1] > this.rectangleComponent.getBottomLeftCoord()[1];
     let squareOnLeft = this.squareComponent.getBottomRightCoord()[0] < this.rectangleComponent.getBottomLeftCoord()[0];
     if(squareOnTop){
-      let offset = this.squareComponent.height;
-      let transform = this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
+      let transform = this.squareOnTopTransform(boundaryLeft, boundaryRight, bottomY, matrix);
       if(!transform)
         return;
 
@@ -1245,67 +1317,27 @@
         item[1] += offset;
       });
     } else if(squareOnRight){
-      let offset = this.squareComponent.height;
-      // change coord first,revert later if transform fail
-      this.rectangleComponent.coordinates.forEach((item) => {
-        item[1] -= offset * 2;
-      });
-      let transform = this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
-      if(!transform){
-        this.rectangleComponent.coordinates.forEach((item) => {
-          item[1] += offset * 2;
-        });
+      let transform = this.squareOnRightTransform(boundaryLeft, boundaryRight, bottomY, matrix);
+      if(!transform)
         return;
-      }
 
       this.squareComponent.coordinates.forEach((item) => {
         item[0] -= offset;
         item[1] -= offset;
       });
     } else if(squareOnBottom){
-      let coordY = this.squareComponent.getBottomLeftCoord()[1];
-      let lowerBound = coordY + this.squareComponent.height;
-      let offset = this.squareComponent.height;
-        // ignore if crash into canvas
-      if(lowerBound > bottomY)
+      let transform = this.squareOnBottomTransform(boundaryLeft, boundaryRight, bottomY, matrix);
+      if(!transform)
         return;
-      // change coord first,revert later if transform fail
-      this.rectangleComponent.coordinates.forEach((item) => {
-        item[0] += offset * 2;
-        item[1] += offset * 2;
-      });
-      let transform = this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
-      if(!transform){
-        this.rectangleComponent.coordinates.forEach((item) => {
-          item[0] -= offset * 2;
-          item[1] -= offset * 2;
-        });
-        return;
-      }
 
       this.squareComponent.coordinates.forEach((item) => {
         item[0] += offset;
         item[1] -= offset;
       });
     } else if(squareOnLeft){
-      let coordX = this.squareComponent.getTopLeftCoord()[0];
-      let leftBound = coordX - this.squareComponent.width;
-      let offset = this.squareComponent.height;
-
-      // ignore if crash into canvas
-      if(leftBound < boundaryLeft)
+      let transform = this.squareOnLeftTransform(boundaryLeft, boundaryRight, bottomY, matrix);
+      if(!transform)
         return;
-      // change coord first,revert later if transform fail
-      this.rectangleComponent.coordinates.forEach((item) => {
-        item[0] -= offset * 2;
-      });
-      let transform = this.rectangleComponent.transform(boundaryLeft, boundaryRight, bottomY, matrix);
-      if(!transform){
-        this.rectangleComponent.coordinates.forEach((item) => {
-          item[0] += offset * 2;
-        });
-        return;
-      }
 
       this.squareComponent.coordinates.forEach((item) => {
         item[0] += offset;
@@ -1343,7 +1375,7 @@
       return new ReverseLShapeComponent(x, y);
     }
 
-    // return new LShapeComponent(x, y);
+    // return new ReverseLShapeComponent(x, y);
   }
 
   window.Component = Component || {};
