@@ -113,7 +113,7 @@
     };
 
     GameConsole.prototype.update = function () {
-        // Game Over
+      // Game Over
       if (this.gameOver)
         return;
 
