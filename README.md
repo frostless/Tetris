@@ -1,7 +1,7 @@
 # Tetris
 Tetris in html cavans
 
-W -> Turn Left<br/> 
+A -> Turn Left<br/> 
 S -> Accelerate<br/>
 D -> Turn Right<br/> 
 J -> Transform<br/>
