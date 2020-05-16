@@ -1,15 +1,17 @@
 (function () {
     "use strict";
 
-    function HalfCrossComponent(x, y) {
-        this.width = 45;
-        this.height = 30;
+    function HalfCrossComponent(x, y, width, height, speedY, basicLength) {
+        this.width = width;
+        this.height = height;
+        this.speedY = speedY;
+        this.basicLength = basicLength;
         this.done = false;
 
         (() => {
         // combination of one Rectangle componet and one square component
-        this.squareComponent = new SquareComponent(x - this.width / 2, y, 15, 15 );
-        this.rectangleComponent = new RectangleComponent(x - this.width / 2, y + this.height / 2 , 45, 15);
+        this.squareComponent = new SquareComponent(x - basicLength / 2, y, basicLength, basicLength, speedY, basicLength);
+        this.rectangleComponent = new RectangleComponent(x - basicLength / 2, y + height / 2 , basicLength * 3, basicLength, speedY, basicLength);
         this.coordinates = this.squareComponent.coordinates.concat(this.rectangleComponent.coordinates);
         })();
     }

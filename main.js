@@ -3,30 +3,31 @@
 
     const convasX = 0;
     const convasY = 0;
-    // needs to be divided by 15
-    // const gameAreaW = 270;
-    const gameAreaW = 270;
-    const gameAreaH = 500;
-    const speedX = 0;
-    const speedY = 5;
-    const speedXAcce= 15;
-    const speedYAcce = 20;
+    // needs to be divided by 10
+    const gameAreaW = 300;
+    // height is 2 times of width
+    const gameAreaH = 600;
+    const speedX = gameAreaW / 10; // the smallest length of a component
+    const basicLength = gameAreaW / 10; // the smallest length of a component
+    const basicSpeedY = 5;
     const speedYSlow = 1;
+    const speedYMax = 50
     const gameSpeed = 80;
-    const statusAreaWidth = 90;
+    const statusAreaWidth = gameAreaW / 2;
  
     let drawer = new Drawer(gameAreaW, gameAreaH, statusAreaWidth);
-    let gameArea = new GameArea(convasX, convasY, gameAreaW, gameAreaH, drawer, statusAreaWidth);
-    let gameConsole = new GameConsole(gameArea, gameSpeed);
+    let componentFactory = new ComponentFactory(basicLength);
+    let gameArea = new GameArea(convasX, convasY, gameAreaW, gameAreaH, statusAreaWidth, componentFactory, drawer);
+    let gameConsole = new GameConsole(gameArea, gameSpeed, speedX, basicSpeedY, speedYSlow, speedYMax);
 
     document.addEventListener("keydown", (event) => {
       let key = event.which || event.keyCode;
       if (key === 65) {
-        gameConsole.turnleft(speedXAcce, speedYSlow);
+        gameConsole.turnleft();
       } else if (key === 83) {
-        gameConsole.accelerate(speedYAcce);
+        gameConsole.accelerate();
       } else if (key === 68) {
-        gameConsole.turnRight(speedXAcce, speedYSlow);
+        gameConsole.turnRight();
       } else if (key === 74) {
         gameConsole.transformComponent();
       } else if (key === 13) {
@@ -35,7 +36,7 @@
     });
 
     document.addEventListener("keyup", () => {
-      gameConsole.reverSpeed(speedX, speedY);
+      gameConsole.reverSpeed();
     });
 
     gameConsole.start();

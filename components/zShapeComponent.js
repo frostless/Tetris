@@ -1,15 +1,17 @@
 (function () {
     "use strict";
   
-    function ZShapeComponent(x, y) {
-      this.width = 45;
-      this.height = 30;
+    function ZShapeComponent(x, y, width, height, speedY, basicLength) {
+      this.width = width;
+      this.height = height;
+      this.speedY = speedY;
+      this.basicLength = basicLength;
       this.done = false;
   
       (() => {
        // combination of two Rectangle componets
-       this.rectangleComponent1 = new RectangleComponent(x - 15, y, 30, 15);
-       this.rectangleComponent2 = new RectangleComponent(x, y + this.height / 2 , 30, 15);
+       this.rectangleComponent1 = new RectangleComponent(x - basicLength, y, basicLength * 2, basicLength, speedY, basicLength);
+       this.rectangleComponent2 = new RectangleComponent(x, y + height / 2 , basicLength *  2, basicLength, speedY, basicLength);
        this.coordinates = this.rectangleComponent1.coordinates.concat(this.rectangleComponent2.coordinates);
       })();
     }

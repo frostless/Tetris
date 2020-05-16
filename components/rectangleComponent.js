@@ -1,12 +1,12 @@
 (function () {
     "use strict";
 
-    function RectangleComponent(x, y, width, height) {
-        this.width = width || 60 ;
-        this.height = height || 15;
+    function RectangleComponent(x, y, width, height, speedY, basicLength) {
+        this.width = width;
+        this.height = height;
         this.speedX = 0;
-        this.speedY = 5;
-        // this.color = color;
+        this.speedY = speedY;
+        this.basicLength = basicLength;
         this.done = false;
 
         (() => {
@@ -15,7 +15,13 @@
         let coordinates = [];
         for (let i = y; i < y + this.height; i++) {
             for (let j = x; j < x + this.width; j++) {
-            coordinates.push([j, i]);
+            let borderXLine = (i - y + 1) % this.basicLength === 0;
+            let borderYLine = (j - x + 1) % this.basicLength === 0;
+            if (borderXLine || borderYLine) {
+                coordinates.push([j, i, 1]); // 1 means border, different color
+              } else {
+                coordinates.push([j, i, 0]); // 0 means no border
+              }
             }
         }
         this.coordinates = coordinates;
@@ -71,7 +77,7 @@
         for (let j = 1; j <= smallestSpeedX; j++) {
             // crash into other components or canvas
             // get the smallest speedX
-            if (coordX + j === boundaryRight + 1 || matrix[coordX + j][coordY] === 1) {
+            if (coordX + j === boundaryRight + 1 || matrix[coordX + j][coordY][0] === 1) {
             smallestSpeedX = j - 1;
             }
         }
@@ -90,7 +96,7 @@
         for (let j = -1; j >= smallestSpeedX; j--) {
             // crash into other components or canvas
             // get the smallest speedX
-            if (coordX + j === boundaryLeft - 1 || matrix[coordX + j][coordY] === 1) {
+            if (coordX + j === boundaryLeft - 1 || matrix[coordX + j][coordY][0] === 1) {
                 smallestSpeedX = j + 1;
             }
         }
@@ -119,7 +125,7 @@
         for (let j = 1; j <= smallestSpeedY; j++) {
             // crash into other components or canvas
             // get the smallest speedy
-            if (coordY + j === bottomY + 1 || matrix[coordX][coordY + j] === 1) {
+            if (coordY + j === bottomY + 1 || matrix[coordX][coordY + j][0] === 1) {
             this.done = this.speedX === 0; // allow more horizontal manevure, more like the original game
             smallestSpeedY = j - 1;
             }
@@ -142,18 +148,25 @@
         let bottomLeft = this.getBottomLeftCoord();
         let newTopLeftX = bottomLeft[0];
         let newTopLeftY = bottomLeft[1] - newHeight + 1; // +1 because coord starts from 0
-        let newCoordinates = [];    
-
+        if(newTopLeftY < 0) return false; // in case higher than canvas top
+        let newCoordinates = [];  
+        
         // this loop #1 check if crashing other components
         // also #2 generate new coordinates
         // doing together for efficent purpose
         for (let i = newTopLeftY; i < newTopLeftY + newHeight; i++) {
-        for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
-            // ignore if crash into other components
-            if (matrix[j][i] === 1) return false;
+            for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
+                // ignore if crash into other components
+                if (matrix[j][i][0] === 1) return false;
 
-            newCoordinates.push([j, i]);
-        }
+                let borderXLine = (i - newTopLeftY + 1) % this.basicLength === 0;
+                let borderYLine = (j - newTopLeftX + 1) % this.basicLength === 0;
+                if (borderXLine || borderYLine) {
+                    newCoordinates.push([j, i, 1]); // 1 means border, different color
+                } else {
+                    newCoordinates.push([j, i, 0]); // 0 means no border
+                }
+            }
         }
         this.coordinates = newCoordinates;
         this.width = newWidth;
@@ -178,12 +191,18 @@
         // also #2 generate new coordinates
         // doing together for efficent purpose
         for (let i = newTopLeftY; i < newTopLeftY + newHeight; i++) {
-        for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
-            // ignore if crash into other components
-            if (matrix[j][i] === 1) return false;
-        
-            newCoordinates.push([j, i]);
-        }
+            for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
+                // ignore if crash into other components
+                if (matrix[j][i][0] === 1) return false;
+            
+                let borderXLine = (i - newTopLeftY + 1) % this.basicLength === 0;
+                let borderYLine = (j - newTopLeftX + 1) % this.basicLength === 0;
+                if (borderXLine || borderYLine) {
+                    newCoordinates.push([j, i, 1]); // 1 means border, different color
+                } else {
+                    newCoordinates.push([j, i, 0]); // 0 means no border
+                }
+            }
         }
         this.coordinates = newCoordinates;
         this.width = newWidth;

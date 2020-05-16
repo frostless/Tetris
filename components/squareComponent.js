@@ -1,12 +1,12 @@
 (function () {
     "use strict";
   
-    function SquareComponent(x, y, width, height) {
-      this.width = width || 30;
-      this.height = height || 30;
+    function SquareComponent(x, y, width, height, speedY, basicLength) {
+      this.width = width;
+      this.height = height;
       this.speedX = 0;
-      this.speedY = 5;
-      // this.color = color;
+      this.speedY = speedY;
+      this.basicLength = basicLength;
       this.done = false;
   
       (() => {
@@ -15,7 +15,13 @@
         let coordinates = [];
         for (let i = y; i < y + this.height; i++) {
           for (let j = x; j < x + this.width; j++) {
-            coordinates.push([j, i]);
+            let borderXLine = (i - y + 1) % this.basicLength === 0;
+            let borderYLine = (j - x + 1) % this.basicLength === 0;
+            if (borderXLine || borderYLine) {
+              coordinates.push([j, i, 1]); // 1 means border, different color
+            } else {
+              coordinates.push([j, i, 0]); // 0 means no border
+            }
           }
         }
         this.coordinates = coordinates;
@@ -84,7 +90,7 @@
         for (let j = 1; j <= smallestSpeedX; j++) {
           // crash into other components or canvas
           // get the smallest speedX
-          if (coordX + j === boundaryRight + 1 || matrix[coordX + j][coordY] === 1) {
+          if (coordX + j === boundaryRight + 1 || matrix[coordX + j][coordY][0] === 1) {
               smallestSpeedX = j - 1;
           }
         }
@@ -103,7 +109,7 @@
         for (let j = -1; j >= smallestSpeedX; j--) {
           // crash into other components or canvas
           // get the smallest speedX
-          if (coordX + j === boundaryLeft - 1 || matrix[coordX + j][coordY] === 1) {
+          if (coordX + j === boundaryLeft - 1 || matrix[coordX + j][coordY][0] === 1) {
               smallestSpeedX = j + 1;
           }
         }
@@ -132,7 +138,7 @@
         for (let j = 1; j <= smallestSpeedY; j++) {
           // crash into other components or canvas
           // get the smallest speedy
-          if (coordY + j === bottomY + 1 || matrix[coordX][coordY + j] === 1) {
+          if (coordY + j === bottomY + 1 || matrix[coordX][coordY + j][0] === 1) {
             this.done = this.speedX === 0; // allow more horizontal manevure, more like the original game
             smallestSpeedY = j - 1;
           }

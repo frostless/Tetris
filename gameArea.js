@@ -1,23 +1,27 @@
 (function () {
   "use strict";
 
-  function GameArea(convasX, convasY, width, height, drawer, statusAreaWidth) {
+  function GameArea(convasX, convasY, width, height, statusAreaWidth, componentFactory, drawer) {
     this.x = convasX;
     this.y = convasY;
     this.drawer = drawer;
     this.width = width;
     this.height = height;
     this.statusAreaWidth = statusAreaWidth;
-    this.score = 0;
+    this.componentFactory = componentFactory;
+    this.basicLength = width / 10; // the length of the smallest building block
     this.componentNo = -1;
+    this.borderColor = 'white';
+    this.seperatorColo = '#d3d3d3';
 
-    // coordinates for the game, 0 not taken, 1 taken, 2 tetris
+    // coordinates for the game first index; 0 not taken, 1 taken, 2 tetris
+    // second index: 0 not border, 1 border
     (() => {
       let matrix = [];
       for (let i = convasX; i < convasX + width; i++) {
         let matrixInner = [];
         for (let j = convasY; j < convasY + height; j++) {
-          matrixInner.push(0);
+          matrixInner.push([0, 0]);
         }
         matrix.push(matrixInner);
       }
@@ -25,29 +29,16 @@
     })();
   }
 
-  GameArea.prototype.initComponent = function () {
+  GameArea.prototype.initComponent = function (speedY) {
     this.componentNo = this.componentNo === -1 ? getRandomInt(0, 6) : this.componentNo;
-    let componentFactory = new ComponentFactory(this.x + this.width/2, this.y);
+    let x = this.x + this.width / 2;
+    let y = this.y;
 
-    if(this.componentNo  === 0){
-      this.component = componentFactory.initSquareComponent();
-    } else if (this.componentNo  === 1){
-      this.component = componentFactory.initRectangleComponent();
-    }  else if (this.componentNo  === 2){
-      this.component = componentFactory.initHalfCrossComponent();
-    }  else if (this.componentNo  === 3){
-      this.component = componentFactory.initZShapeComponent();
-    }  else if (this.componentNo  === 4){
-      this.component = componentFactory.initReverseZShapeComponent();
-    } else if (this.componentNo  === 5){
-      this.component = componentFactory.initLShapeComponent();
-    } else if (this.componentNo  === 6){
-      this.component = componentFactory.initReverseLShapeComponent();
-    } 
+    this.component = this.componentFactory.initComponent(this.componentNo, x, y, speedY);
   };
 
   GameArea.prototype.drawNextComponent = function () {
-    let textHeight = 80;
+    let textHeight = 140;
     let height = textHeight + 20;
     let x = this.x + this.width + this.statusAreaWidth / 3;
     
@@ -60,49 +51,19 @@
     this.drawer.fillText("Next: ", x, textHeight);
 
     this.componentNo = getRandomInt(0, 6);
-    let componentFactory = new ComponentFactory(
-      this.x + this.width + this.statusAreaWidth / 2,
-      this.y + height
-    );
 
-    let component;
-
-    // hack for the coord for some components
-    // a solution would be to init componeng in a form that could be divided by 15
-    // so l shapes comes as little l at first
-    if (this.componentNo === 0) {
-      component = componentFactory.initSquareComponent();
-    } else if (this.componentNo === 1) {
-      component = componentFactory.initRectangleComponent();
-    } else if (this.componentNo === 2) {
-      component = componentFactory.initHalfCrossComponent();
-      component.coordinates.forEach((item) => {
-        item[0] += 22;
-      });
-    } else if (this.componentNo === 3) {
-      component = componentFactory.initZShapeComponent();
-      component.coordinates.forEach((item) => {
-        item[0] += 5;
-      });
-    } else if (this.componentNo === 4) {
-      component = componentFactory.initReverseZShapeComponent();
-      component.coordinates.forEach((item) => {
-        item[0] -= 5;
-      });
-    } else if (this.componentNo === 5) {
-      component = componentFactory.initLShapeComponent();
-      component.coordinates.forEach((item) => {
-        item[0] += 22;
-      });
-    } else if (this.componentNo === 6) {
-      component = componentFactory.initReverseLShapeComponent();
-      component.coordinates.forEach((item) => {
-        item[0] += 22;
-      });
-    }
+    x = this.x + this.width + this.statusAreaWidth / 2;
+    let y = this.y + height;
+    let speedY = 0; // no need for speedY
+   
+    let component = this.componentFactory.initComponentDrawing(this.componentNo, x, y, speedY);
 
     component.coordinates.forEach((item) => {
-      this.drawer.fillRect(item[0], item[1], 1, 1);
+      if(item[2] === 0){
+        this.drawer.fillRect(item[0], item[1], 1, 1);
+      } else{
+        this.drawer.fillRect(item[0], item[1], 1, 1, this.borderColor);
+      }
     });
   };
 
@@ -116,7 +77,7 @@
     let y = this.y;
     let width = 1;
     let height = this.y + this.height;
-    this.drawer.fillRect(x, y, width, height, '#d3d3d3');
+    this.drawer.fillRect(x, y, width, height, this.seperatorColo);
   };
 
   GameArea.prototype.clearCanvas = function () {
@@ -125,7 +86,11 @@
 
   GameArea.prototype.drawComponent = function () {
     this.component.coordinates.forEach((item) => {
-      this.drawer.fillRect(item[0], item[1], 1, 1);
+      if(item[2] === 0){
+        this.drawer.fillRect(item[0], item[1], 1, 1);
+      } else{
+        this.drawer.fillRect(item[0], item[1], 1, 1, this.borderColor);
+      }
     });
   };
 
@@ -164,14 +129,24 @@
     this.component.changeVertSpeed(speedY)
   };
 
-  GameArea.prototype.updateScoreBoard = function () {
+  GameArea.prototype.updateScoreBoard = function (score) {
     let x = this.x + this.width + this.statusAreaWidth / 3;
     let y = this.y;
     let width = 100;
-    let height = 25;
-    this.drawer.clearRect(x, y, width, height + 30);
+    let height = 80;
+    this.drawer.clearRect(x, height - 10, width, 35);
     this.drawer.fillText('Score: ', x, height);
-    this.drawer.fillText(this.score, x + 10, height + 20);
+    this.drawer.fillText(score, x + 10, height + 20);
+  };
+
+  GameArea.prototype.updateLevel= function (level) {
+    let x = this.x + this.width + this.statusAreaWidth / 3;
+    let y = this.y;
+    let width = 100;
+    let height = 30;
+    this.drawer.clearRect(x, height - 10, width, 35);
+    this.drawer.fillText('Level: ', x, height);
+    this.drawer.fillText(level, x + 10, height + 20);
   };
 
   GameArea.prototype.isComponentDone = function () {
@@ -185,7 +160,8 @@
   GameArea.prototype.updateMatrix = function () {
     this.component.coordinates.forEach((item) => {
       // 1 means taken
-      this.matrix[item[0]][item[1]] = 1;
+      this.matrix[item[0]][item[1]][0] = 1;
+      this.matrix[item[0]][item[1]][1] = item[2];
     });
   };
 
@@ -200,7 +176,7 @@
       let matrixlength = this.matrix.length;
       let tetris = true;
       for (let j = 0; j < matrixlength; j++) {
-        if (this.matrix[j][i] === 0) {
+        if (this.matrix[j][i][0] === 0) {
           tetris = false;
           break;
         }
@@ -210,7 +186,7 @@
         this.score++;
         shouldUpdateRest = true;
         for (let j = 0; j < matrixlength; j++) {
-          this.matrix[j][i] = 2;
+          this.matrix[j][i][0] = 2;
         }
       }
     }
@@ -224,23 +200,28 @@
     let matrixBottom = this.matrix[0].length - 1; // -1 because matrix height starts from 0 not 1
     let matrixLength = this.matrix.length;
     for (let i = matrixBottom; i >= 0; i--) {
-      if (this.matrix[0][i] === 2) {
+      if (this.matrix[0][i][0] === 2) {
         lines++;
         // update all to 0
         for (let j = 0; j < matrixLength; j++) {
-          this.matrix[j][i] = 0;
+          this.matrix[j][i][0] = 0;
         }
       } else {
         if (lines > 0) {
           // update new pos by lines
           for (let j = 0; j < matrixLength; j++) {
-            let originalVal = this.matrix[j][i];
-            this.matrix[j][i] = 0;
-            this.matrix[j][i + lines] = originalVal;
+            let originalVal = this.matrix[j][i][0];
+            let originalBorder = this.matrix[j][i][1];
+            this.matrix[j][i][0] = 0;
+            this.matrix[j][i + lines][0] = originalVal;
+            this.matrix[j][i + lines][1] = originalBorder;
           }
         }
       }
     }
+
+    let score = lines / this.basicLength * 10;
+    return score;
   };
 
   GameArea.prototype.redrawMatrix = function () {
@@ -248,19 +229,19 @@
     let matrixHeight = this.matrix[0].length;
     for (let i = 0; i < matrixLength; i++) {
       for (let j = 0; j < matrixHeight; j++) {
-        if (this.matrix[i][j] === 1) {
-          this.drawer.fillRect(i, j, 1, 1);
+        if (this.matrix[i][j][0] === 1) {
+          if(this.matrix[i][j][1] === 0){
+            this.drawer.fillRect(i, j, 1, 1);
+          } else {
+            this.drawer.fillRect(i, j, 1, 1, this.borderColor);
+          }
         }
       }
     }
   };
 
   GameArea.prototype.tetris = function () {
-    if (this.checkTetris()) {
-      this.updateTetris();
-      this.clearCanvas();
-      this.redrawMatrix();
-    }
+    return this.checkTetris();
   };
 
   const getRandomInt = function(min, max) {
