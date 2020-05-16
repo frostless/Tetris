@@ -9,23 +9,25 @@
     const gameAreaH = 600;
     const speedX = gameAreaW / 10; // the smallest length of a component
     const basicLength = gameAreaW / 10; // the smallest length of a component
-    const basicSpeedY = 5;
-    const speedYSlow = 1;
-    const speedYMax = 50
-    const gameSpeed = 80;
+    const gameSpeed = 700;
+    const maxGameSpeed = 50;
     const statusAreaWidth = gameAreaW / 2;
  
     let drawer = new Drawer(gameAreaW, gameAreaH, statusAreaWidth);
     let componentFactory = new ComponentFactory(basicLength);
     let gameArea = new GameArea(convasX, convasY, gameAreaW, gameAreaH, statusAreaWidth, componentFactory, drawer);
-    let gameConsole = new GameConsole(gameArea, gameSpeed, speedX, basicSpeedY, speedYSlow, speedYMax);
+    let gameConsole = new GameConsole(gameArea, gameSpeed, maxGameSpeed, speedX);
 
-    document.addEventListener("keydown", (event) => {
+    let fired = false;
+    document.addEventListener("keydown", function(event){
       let key = event.which || event.keyCode;
       if (key === 65) {
         gameConsole.turnleft();
       } else if (key === 83) {
-        gameConsole.accelerate();
+        if(!fired){
+          fired = true;
+          gameConsole.accelerate();
+        }
       } else if (key === 68) {
         gameConsole.turnRight();
       } else if (key === 74) {
@@ -36,7 +38,13 @@
     });
 
     document.addEventListener("keyup", () => {
-      gameConsole.reverSpeed();
+      let key = event.which || event.keyCode;
+      if (key === 83) {
+        fired = false;
+        gameConsole.reverYSpeed();
+      } else if (key === 65 || key === 68){
+        gameConsole.reverXSpeed();
+      }
     });
 
     gameConsole.start();

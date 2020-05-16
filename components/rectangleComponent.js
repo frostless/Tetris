@@ -1,11 +1,11 @@
 (function () {
     "use strict";
 
-    function RectangleComponent(x, y, width, height, speedY, basicLength) {
+    function RectangleComponent(x, y, width, height, basicLength) {
         this.width = width;
         this.height = height;
         this.speedX = 0;
-        this.speedY = speedY;
+        this.speedY = basicLength;
         this.basicLength = basicLength;
         this.done = false;
 
@@ -48,27 +48,15 @@
         return this.coordinates[length - 1];
     }
 
-    RectangleComponent.prototype.update = function (boundaryLeft, boundaryRight, bottomY, matrix) {
-        if (this.speedX > 0) {
-        // 1: Check if crash right
-        this.checkCrashRight(boundaryRight, matrix);
-        }
-
-        if (this.speedX < 0) {
-        // 2: Check if crash left
-        this.checkCrashLeft(boundaryLeft, matrix);
-        }
-
-        // 3: check if crash into bottom
-        this.checkCrashBottom(boundaryLeft, boundaryRight, bottomY, matrix);
-
+    RectangleComponent.prototype.update = function (bottomY, matrix) {
+        this.checkCrashBottom(bottomY, matrix);
         // update pos
         this.updateCoord();
     };
 
-    RectangleComponent.prototype.checkCrashRight = function (boundaryRight, matrix) {
+    RectangleComponent.prototype.checkCrashRight = function (speedX, boundaryRight, matrix) {
         let length = this.coordinates.length;
-        let smallestSpeedX = this.speedX;
+        let smallestSpeedX = speedX;
         // loop through the rightmost coord
         for (let i = 0; i < length; i += this.width) {
         let coordX = this.coordinates[i][0] + this.width - 1; // -1 because coordinates starts from 0
@@ -77,8 +65,9 @@
         for (let j = 1; j <= smallestSpeedX; j++) {
             // crash into other components or canvas
             // get the smallest speedX
-            if (coordX + j === boundaryRight + 1 || matrix[coordX + j][coordY][0] === 1) {
-            smallestSpeedX = j - 1;
+            if (coordX + j === boundaryRight + 1 || 
+                (matrix[coordX + j][coordY] && matrix[coordX + j][coordY][0] === 1)) {
+                smallestSpeedX = j - 1;
             }
         }
 
@@ -86,9 +75,9 @@
         this.speedX = smallestSpeedX;
     };
 
-    RectangleComponent.prototype.checkCrashLeft = function (boundaryLeft, matrix) {
+    RectangleComponent.prototype.checkCrashLeft = function (speedX, boundaryLeft, matrix) {
         let length = this.coordinates.length;
-        let smallestSpeedX = this.speedX;
+        let smallestSpeedX = speedX;
         // loop through the lefmost coord
         for (let i = 0; i < length; i += this.width) {
         let coordX = this.coordinates[i][0];
@@ -96,7 +85,8 @@
         for (let j = -1; j >= smallestSpeedX; j--) {
             // crash into other components or canvas
             // get the smallest speedX
-            if (coordX + j === boundaryLeft - 1 || matrix[coordX + j][coordY][0] === 1) {
+            if (coordX + j === boundaryLeft - 1 || 
+                (matrix[coordX + j][coordY] && matrix[coordX + j][coordY][0] === 1)) {
                 smallestSpeedX = j + 1;
             }
         }
@@ -105,22 +95,13 @@
         this.speedX = smallestSpeedX;
     };
 
-    RectangleComponent.prototype.checkCrashBottom = function (boundaryLeft, boundaryRight, bottomY, matrix) {
+    RectangleComponent.prototype.checkCrashBottom = function (bottomY, matrix) {
         let length = this.coordinates.length - 1; // -1 because coordinates starts from 0
-        let smallestSpeedY = this.speedY;
+        let smallestSpeedY = this.basicLength;
         // loop through the lowest Xs
         for (let i = length; i > length - this.width; i--) {
         let coordX = this.coordinates[i][0];
         let coordY = this.coordinates[i][1];
-
-        // take speedX into consideration, solution to bug mentioned earlier
-        // ignore if the potential movent crash into componengt
-        if (
-            coordX + this.speedX >= boundaryLeft &&
-            coordX + this.speedX <= boundaryRight
-        ) {
-            coordX += this.speedX;
-        }
         
         for (let j = 1; j <= smallestSpeedY; j++) {
             // crash into other components or canvas
@@ -137,8 +118,7 @@
 
     RectangleComponent.prototype.updateCoord = function () {
         this.coordinates.forEach((item) => {
-        item[0] += this.speedX;
-        item[1] += this.speedY;
+            item[1] += this.speedY;
         });
     };
 
@@ -148,7 +128,6 @@
         let bottomLeft = this.getBottomLeftCoord();
         let newTopLeftX = bottomLeft[0];
         let newTopLeftY = bottomLeft[1] - newHeight + 1; // +1 because coord starts from 0
-        if(newTopLeftY < 0) return false; // in case higher than canvas top
         let newCoordinates = [];  
         
         // this loop #1 check if crashing other components
@@ -157,7 +136,7 @@
         for (let i = newTopLeftY; i < newTopLeftY + newHeight; i++) {
             for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
                 // ignore if crash into other components
-                if (matrix[j][i][0] === 1) return false;
+                if (matrix[j][i] && matrix[j][i][0] === 1) return false;
 
                 let borderXLine = (i - newTopLeftY + 1) % this.basicLength === 0;
                 let borderYLine = (j - newTopLeftX + 1) % this.basicLength === 0;
@@ -193,7 +172,7 @@
         for (let i = newTopLeftY; i < newTopLeftY + newHeight; i++) {
             for (let j = newTopLeftX; j < newTopLeftX + newWidth; j++) {
                 // ignore if crash into other components
-                if (matrix[j][i][0] === 1) return false;
+                if (matrix[j][i] && matrix[j][i][0] === 1) return false;
             
                 let borderXLine = (i - newTopLeftY + 1) % this.basicLength === 0;
                 let borderYLine = (j - newTopLeftX + 1) % this.basicLength === 0;
@@ -219,14 +198,25 @@
         }
     };
 
-    RectangleComponent.prototype.changeHoriSpeed = function (speedX, speedY) {
-        this.speedX = speedX;
-        this.speedY = speedY;
+    RectangleComponent.prototype.revertHorizontalSpeed = function () {
+        this.speedX = 0;
+    };
+
+    RectangleComponent.prototype.changeHorizontalSpeed = function (speedX, matrix, boundaryLeft, boundaryRight) {
+        if (speedX > 0) {
+          this.checkCrashRight(speedX, boundaryRight, matrix)
+          this.updateX(this.speedX);
+        } else {
+          this.checkCrashLeft(speedX, boundaryLeft, matrix) 
+          this.updateX(this.speedX);
+        }
     }
 
-    RectangleComponent.prototype.changeVertSpeed = function (speedY) {
-        this.speedY = speedY;
-    }
+    RectangleComponent.prototype.updateX = function (x) {
+        this.coordinates.forEach((item) => {
+          item[0] += x;
+        });
+      }
 
     RectangleComponent.prototype.isGameOver = function (boundaryTop) {
         return this.coordinates[0][1] <= boundaryTop;

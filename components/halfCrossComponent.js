@@ -1,17 +1,17 @@
 (function () {
     "use strict";
 
-    function HalfCrossComponent(x, y, width, height, speedY, basicLength) {
+    function HalfCrossComponent(x, y, width, height, basicLength) {
         this.width = width;
         this.height = height;
-        this.speedY = speedY;
+        this.speedY = basicLength;
         this.basicLength = basicLength;
         this.done = false;
 
         (() => {
         // combination of one Rectangle componet and one square component
-        this.squareComponent = new SquareComponent(x - basicLength / 2, y, basicLength, basicLength, speedY, basicLength);
-        this.rectangleComponent = new RectangleComponent(x - basicLength / 2, y + height / 2 , basicLength * 3, basicLength, speedY, basicLength);
+        this.squareComponent = new SquareComponent(x - basicLength / 2, y, basicLength, basicLength, basicLength);
+        this.rectangleComponent = new RectangleComponent(x - basicLength / 2, y + height / 2 , basicLength * 3, basicLength, basicLength);
         this.coordinates = this.squareComponent.coordinates.concat(this.rectangleComponent.coordinates);
         })();
     }
@@ -51,35 +51,17 @@
         //   : rectangleBottomRightCcoord;
     };
 
-    HalfCrossComponent.prototype.update = function (boundaryLeft, boundaryRight, bottomY, matrix) {
-        let newSpeedX = 0;
+    HalfCrossComponent.prototype.update = function (bottomY, matrix) {
         let newSpeedY = 0;
 
-        if (this.squareComponent.speedX > 0) {
-        // 1: Check if crash right
-        this.squareComponent.checkCrashRight(boundaryRight, matrix);
-        this.rectangleComponent.checkCrashRight(boundaryRight, matrix);
-        newSpeedX = Math.min(this.squareComponent.speedX, this.rectangleComponent.speedX);
-        }
-
-        if (this.squareComponent.speedX < 0) {
-        // 2: Check if crash left
-        this.squareComponent.checkCrashLeft(boundaryLeft, matrix);
-        this.rectangleComponent.checkCrashLeft(boundaryLeft, matrix);
-        newSpeedX = Math.max(this.squareComponent.speedX, this.rectangleComponent.speedX);
-        }
-
-        // 3: check if crash into bottom
-        this.squareComponent.checkCrashBottom(boundaryLeft, boundaryRight, bottomY, matrix);
-        this.rectangleComponent.checkCrashBottom(boundaryLeft, boundaryRight, bottomY, matrix);
+        this.squareComponent.checkCrashBottom(bottomY, matrix);
+        this.rectangleComponent.checkCrashBottom(bottomY, matrix);
 
         newSpeedY = Math.min(this.squareComponent.speedY, this.rectangleComponent.speedY);
 
         this.done = this.rectangleComponent.done || this.squareComponent.done;
 
-        this.squareComponent.speedX = newSpeedX;
         this.squareComponent.speedY = newSpeedY;
-        this.rectangleComponent.speedX = newSpeedX;
         this.rectangleComponent.speedY = newSpeedY;
 
         // update pos
@@ -87,16 +69,25 @@
         this.rectangleComponent.updateCoord();
     };
 
-    HalfCrossComponent.prototype.changeHoriSpeed = function (speedX, speedY) {
-        this.squareComponent.speedX = speedX;
-        this.squareComponent.speedY = speedY;
-        this.rectangleComponent.speedX = speedX;
-        this.rectangleComponent.speedY = speedY;
+    HalfCrossComponent.prototype.changeHorizontalSpeed = function (speedX, matrix, boundaryLeft, boundaryRight) {
+        if (speedX > 0) {
+            this.squareComponent.checkCrashRight(speedX, boundaryRight, matrix);
+            this.rectangleComponent.checkCrashRight(speedX, boundaryRight, matrix);
+            let x = Math.min(this.squareComponent.speedX, this.rectangleComponent.speedX);
+            this.squareComponent.updateX(x);
+            this.rectangleComponent.updateX(x);
+          } else {
+            this.squareComponent.checkCrashLeft(speedX, boundaryLeft, matrix);
+            this.rectangleComponent.checkCrashLeft(speedX, boundaryLeft, matrix);
+            let x = Math.max(this.squareComponent.speedX, this.rectangleComponent.speedX);
+            this.squareComponent.updateX(x);
+            this.rectangleComponent.updateX(x);
+          }
     }
 
-    HalfCrossComponent.prototype.changeVertSpeed = function (speedY) {
-        this.squareComponent.speedY = speedY;
-        this.rectangleComponent.speedY = speedY;
+    HalfCrossComponent.prototype.revertHorizontalSpeed = function () {
+        this.squareComponent.revertHorizontalSpeed();
+        this.rectangleComponent.revertHorizontalSpeed();
     }
 
     HalfCrossComponent.prototype.isGameOver = function (boundaryTop) {

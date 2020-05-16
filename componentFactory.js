@@ -5,29 +5,29 @@
     this.basicLength = basicLength;
   }
   
-  ComponentFactory.prototype.initComponent = function (componentNo ,x, y, speedY) {
+  ComponentFactory.prototype.initComponent = function (componentNo ,x, y) {
     switch (componentNo) {
       case 0:
-        return this.initSquareComponent(x, y, speedY);
+        return this.initSquareComponent(x, y);
       case 1:
-        return this.initRectangleComponent(x, y, speedY);
+        return this.initRectangleComponent(x, y);
       case 2:
-        return this.initHalfCrossComponent(x, y, speedY);
+        return this.initHalfCrossComponent(x, y);
       case 3:
-        return this.initZShapeComponent(x, y, speedY);
+        return this.initZShapeComponent(x, y);
       case 4:
-        return this.initReverseZShapeComponent(x, y , speedY);
+        return this.initReverseZShapeComponent(x, y);
       case 5:
-        return this.initLShapeComponent(x, y, speedY);
+        return this.initLShapeComponent(x, y);
       case 6:
-        return this.initReverseLShapeComponent(x, y, speedY);
+        return this.initReverseLShapeComponent(x, y);
       default:
-        return this.initSquareComponent(x, y, speedY);
+        return this.initSquareComponent(x, y);
     }
   }
 
-  ComponentFactory.prototype.initComponentDrawing = function (componentNo ,x, y, speedY) {
-    let component = this.initComponent(componentNo ,x, y, speedY)
+  ComponentFactory.prototype.initComponentDrawing = function (componentNo ,x, y) {
+    let component = this.initComponent(componentNo ,x, y)
     let offset = this.basicLength / 2;
     switch (componentNo) {
       case 2:
@@ -59,46 +59,46 @@
     return component;
   }
 
-  ComponentFactory.prototype.initSquareComponent = function (x, y, speedY) {
+  ComponentFactory.prototype.initSquareComponent = function (x, y) {
     const width = this.basicLength * 2;
     const height = this.basicLength * 2;
-    return new SquareComponent(x, y, width, height, speedY, this.basicLength);
+    return new SquareComponent(x, y, width, height, this.basicLength);
   }
 
-  ComponentFactory.prototype.initRectangleComponent = function (x, y, speedY) {
+  ComponentFactory.prototype.initRectangleComponent = function (x, y) {
     const width = this.basicLength * 4;
     const height = this.basicLength;
-    return new RectangleComponent(x, y, width, height, speedY, this.basicLength);
+    return new RectangleComponent(x, y, width, height, this.basicLength);
   }
 
-  ComponentFactory.prototype.initHalfCrossComponent = function (x, y, speedY) {
+  ComponentFactory.prototype.initHalfCrossComponent = function (x, y) {
     const width = this.basicLength * 3;
     const height = this.basicLength * 2;
-    return new HalfCrossComponent(x, y, width, height, speedY, this.basicLength);
+    return new HalfCrossComponent(x, y, width, height, this.basicLength);
   }
 
-  ComponentFactory.prototype.initZShapeComponent = function (x, y, speedY) {
+  ComponentFactory.prototype.initZShapeComponent = function (x, y) {
     const width = this.basicLength * 3;
     const height = this.basicLength * 2;
-    return new ZShapeComponent(x, y, width, height, speedY, this.basicLength);
+    return new ZShapeComponent(x, y, width, height, this.basicLength);
   }
 
-  ComponentFactory.prototype.initReverseZShapeComponent = function (x, y, speedY) {
+  ComponentFactory.prototype.initReverseZShapeComponent = function (x, y) {
     const width = this.basicLength * 3;
     const height = this.basicLength * 2;
-    return new ReverseZShapeComponent(x, y, width, height, speedY, this.basicLength);
+    return new ReverseZShapeComponent(x, y, width, height, this.basicLength);
   }
 
-  ComponentFactory.prototype.initLShapeComponent = function (x, y, speedY) {
+  ComponentFactory.prototype.initLShapeComponent = function (x, y) {
     const width = this.basicLength * 3;
     const height = this.basicLength * 2;
-    return new LShapeComponent(x, y, width, height, speedY, this.basicLength);
+    return new LShapeComponent(x, y, width, height, this.basicLength);
   }
 
-  ComponentFactory.prototype.initReverseLShapeComponent = function (x, y, speedY) {
+  ComponentFactory.prototype.initReverseLShapeComponent = function (x, y) {
     const width = this.basicLength * 3;
     const height = this.basicLength * 2;
-    return new ReverseLShapeComponent(x, y, width, height, speedY, this.basicLength);
+    return new ReverseLShapeComponent(x, y, width, height, this.basicLength);
   }
 
   window.ComponentFactory = ComponentFactory || {};

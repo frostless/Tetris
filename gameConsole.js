@@ -1,42 +1,63 @@
 (function () {
     "use strict";
 
-    function GameConsole(gameArea, gameSpeed, speedX, basicSpeedY, speedYSlow, speedYMax) {
+    function GameConsole(gameArea, gameSpeed, maxGameSpeed, speedX) {
         this.gameArea = gameArea;
         this.gameSpeed = gameSpeed;
-        this.basicSpeedY = basicSpeedY;
-        this.speedYSlow = speedYSlow;
-        this.speedYMax = speedYMax;
+        this.maxGameSpeed = maxGameSpeed;
         this.speedX = speedX;
         this.level = 1; // game level starts at 0
         this.score = 0;
         this.gameOver = false;
+        this.currentGameSpeed = gameSpeed;
     }
 
     GameConsole.prototype.start = function () {
         this.gameArea.initCanvas();
-        this.gameArea.initComponent(this.getComponentSpeed());
+        this.gameArea.initComponent();
         this.gameArea.drawNextComponent();
-        this.interval = setInterval(this.update.bind(this), this.gameSpeed);
+        this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
     };
 
     GameConsole.prototype.turnleft = function () {
-      let speedY = this.speedYSlow * this.level;
-      this.gameArea.changeCompHoriSpeed(-this.speedX, speedY)
+      this.gameArea.changeCompHorizontalSpeed(-this.speedX);
+      if (this.currentGameSpeed === this.getGameSpeedSlow()) return;
+      if (this.interval) {
+        clearInterval(this.interval);
+        this.interval = setInterval(this.update.bind(this), this.getGameSpeedSlow());
+      }
     };
 
     GameConsole.prototype.turnRight = function () {
-      let speedY = this.speedYSlow * this.level;
-      this.gameArea.changeCompHoriSpeed(this.speedX, speedY)
+      this.gameArea.changeCompHorizontalSpeed(this.speedX)
+
+      if (this.currentGameSpeed === this.getGameSpeedSlow()) return;
+      if (this.interval) {
+        clearInterval(this.interval);
+        this.interval = setInterval(this.update.bind(this), this.getGameSpeedSlow());
+      }
     };
 
     GameConsole.prototype.accelerate = function () {
-      this.gameArea.changeCompVertSpeed(this.speedYMax)
+      if (this.interval) {
+        clearInterval(this.interval);
+        this.interval = setInterval(this.update.bind(this), this.maxGameSpeed);
+      }
     };
 
-    GameConsole.prototype.reverSpeed = function () {
-      this.gameArea.changeCompHoriSpeed(0); // no speedX by default
-      this.gameArea.changeCompVertSpeed(this.getComponentSpeed());
+    GameConsole.prototype.reverYSpeed = function () {
+      if (this.interval) {
+        clearInterval(this.interval);
+        this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
+      }
+    };
+
+    GameConsole.prototype.reverXSpeed = function () {
+      this.gameArea.reverseCompHorizontalSpeed();
+      if (this.interval) {
+        clearInterval(this.interval);
+        this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
+      }
     };
 
     GameConsole.prototype.transformComponent = function () {
@@ -48,12 +69,25 @@
         clearInterval(this.interval);
         this.interval = null;
       } else {
-        this.interval = setInterval(this.update.bind(this), this.gameSpeed);
+        this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
       }
     };
 
-    GameConsole.prototype.getComponentSpeed = function () {
-      return Math.min(this.level * this.basicSpeedY, this.speedYMax);
+    GameConsole.prototype.getGameSpeed= function () {
+      this.currentGameSpeed = Math.max(this.gameSpeed - this.level * 100, this.maxGameSpeed);
+      return this.currentGameSpeed;
+    };
+
+    GameConsole.prototype.getGameSpeedSlow= function () {
+      this.currentGameSpeed =  Math.max(this.gameSpeed - this.level * 50, this.maxGameSpeed);
+      return this.currentGameSpeed;
+    };
+
+    GameConsole.prototype.updateGameSpeed = function () {
+      if (this.interval) {
+        clearInterval(this.interval);
+        this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
+      }
     };
 
     GameConsole.prototype.updateLevel = function () {
@@ -90,17 +124,18 @@
         this.gameArea.updateMatrix();
 
         let tetrix = this.gameArea.tetris();
-        if(tetrix){
+        if (tetrix) {
           this.score += this.gameArea.updateTetris();
           this.updateLevel();
           this.gameArea.clearCanvas();
           this.gameArea.redrawMatrix();
+          this.updateGameSpeed();
         }    
 
         // check game status
         this.gameOver = this.gameArea.isGameOver();
 
-        this.gameArea.initComponent(this.getComponentSpeed());
+        this.gameArea.initComponent();
         this.gameArea.drawComponent();
         this.gameArea.drawNextComponent();
 

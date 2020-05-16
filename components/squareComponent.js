@@ -1,11 +1,11 @@
 (function () {
     "use strict";
   
-    function SquareComponent(x, y, width, height, speedY, basicLength) {
+    function SquareComponent(x, y, width, height, basicLength) {
       this.width = width;
       this.height = height;
       this.speedX = 0;
-      this.speedY = speedY;
+      this.speedY = basicLength;
       this.basicLength = basicLength;
       this.done = false;
   
@@ -48,60 +48,34 @@
       return this.coordinates[length - 1];
     }
   
-    SquareComponent.prototype.update = function (boundaryLeft, boundaryRight, bottomY, matrix) {
-      // here we calculate if the next update would crash into canvas's left, right, bottom,
-      // and other components' left, right and bottom
-      // an offset will be made to the speed diredction to avoid potential crashes
-      // if the calculation is done at one direction at a time then a bug might occur:
-      // if the movement will not crash into a component horiontolly when calculating speedX
-      // and not vertically when calculatting speedY, offset will not occur, but when speedX and SpeedY 
-      // are taken into consideration together, crash may happen, when offset happen at a later time,
-      // the crashing component will be erased and this will also partilly earse the componeng being crashed
-      // solutions: 
-      // 1: refill the whole canvas every update -- too inefficient
-      // 2: take speedX and speedY together into consideration -- good
-      // 3: when speedX != 0 make speedY = 0 -- ok and easy to implement
-      // use #2 for now, as it refelcts the original game better
-      if (this.speedX > 0) {
-        // 1: Check if crash right
-        this.checkCrashRight(boundaryRight, matrix);
-      }
-  
-      if (this.speedX < 0) {
-        // 2: Check if crash left
-        this.checkCrashLeft(boundaryLeft, matrix);
-      }
-  
-      // 3: check if crash into bottom
-      this.checkCrashBottom(boundaryLeft, boundaryRight, bottomY, matrix);
-  
+    SquareComponent.prototype.update = function (bottomY, matrix) {
+      this.checkCrashBottom(bottomY, matrix);
       // update pos
       this.updateCoord();
     };
   
-    SquareComponent.prototype.checkCrashRight = function (boundaryRight, matrix) {
+    SquareComponent.prototype.checkCrashRight = function (speedX, boundaryRight, matrix) {
       let length = this.coordinates.length;
-      let smallestSpeedX = this.speedX;
+      let smallestSpeedX = speedX;
       // loop through the rightmost Coords
       for (let i = 0; i < length; i += this.width) {
         let coordX = this.coordinates[i][0] + this.width - 1; // -1 because coordinates starts from 0
         let coordY = this.coordinates[i][1];
-  
+
         for (let j = 1; j <= smallestSpeedX; j++) {
           // crash into other components or canvas
           // get the smallest speedX
-          if (coordX + j === boundaryRight + 1 || matrix[coordX + j][coordY][0] === 1) {
-              smallestSpeedX = j - 1;
+          if ( coordX + j === boundaryRight + 1 || matrix[coordX + j][coordY][0] === 1 ) {
+            smallestSpeedX = j - 1;
           }
         }
-  
       }
       this.speedX = smallestSpeedX;
     };
   
-    SquareComponent.prototype.checkCrashLeft = function (boundaryLeft, matrix) {
+    SquareComponent.prototype.checkCrashLeft = function (speedX, boundaryLeft, matrix) {
       let length = this.coordinates.length;
-      let smallestSpeedX = this.speedX;
+      let smallestSpeedX = speedX;
       // loop through the lefmost Coords
       for (let i = 0; i < length; i += this.width) {
         let coordX = this.coordinates[i][0];
@@ -109,31 +83,24 @@
         for (let j = -1; j >= smallestSpeedX; j--) {
           // crash into other components or canvas
           // get the smallest speedX
-          if (coordX + j === boundaryLeft - 1 || matrix[coordX + j][coordY][0] === 1) {
-              smallestSpeedX = j + 1;
+          if (
+            coordX + j === boundaryLeft - 1 ||
+            matrix[coordX + j][coordY][0] === 1
+          ) {
+            smallestSpeedX = j + 1;
           }
         }
-  
       }
       this.speedX = smallestSpeedX;
     };
   
-    SquareComponent.prototype.checkCrashBottom = function (boundaryLeft, boundaryRight, bottomY, matrix) {
+    SquareComponent.prototype.checkCrashBottom = function (bottomY, matrix) {
       let length = this.coordinates.length - 1; // -1 because coordinates starts from 0
-      let smallestSpeedY = this.speedY;
+      let smallestSpeedY = this.basicLength;
       // loop through the lowest Xs
       for (let i = length; i > length - this.width; i--) {
         let coordX = this.coordinates[i][0];
         let coordY = this.coordinates[i][1];
-  
-        // take speedX into consideration, solution to bug mentioned earlier
-        // ignore if the potential movent crash into componengt
-        if (
-          coordX + this.speedX >= boundaryLeft &&
-          coordX + this.speedX <= boundaryRight
-        ) {
-          coordX += this.speedX;
-        }
       
         for (let j = 1; j <= smallestSpeedY; j++) {
           // crash into other components or canvas
@@ -145,23 +112,34 @@
         }
   
       }
+
       this.speedY = smallestSpeedY;
     };
   
     SquareComponent.prototype.updateCoord = function () {
       this.coordinates.forEach((item) => {
-        item[0] += this.speedX;
         item[1] += this.speedY;
       });
     };
+
+    SquareComponent.prototype.revertHorizontalSpeed = function () {
+      this.speedX = 0;
+    };
   
-    SquareComponent.prototype.changeHoriSpeed = function (speedX, speedY) {
-      this.speedX = speedX;
-      this.speedY = speedY;
+    SquareComponent.prototype.changeHorizontalSpeed = function (speedX, matrix, boundaryLeft, boundaryRight) {
+      if (speedX > 0) {
+        this.checkCrashRight(speedX, boundaryRight, matrix);
+        this.updateX(this.speedX);
+      } else {
+        this.checkCrashLeft(speedX, boundaryLeft, matrix) 
+        this.updateX(this.speedX);
+      }
     }
-  
-    SquareComponent.prototype.changeVertSpeed = function (speedY) {
-      this.speedY = speedY;
+
+    SquareComponent.prototype.updateX = function (x) {
+      this.coordinates.forEach((item) => {
+        item[0] += x;
+      });
     }
   
     SquareComponent.prototype.transform = function () {

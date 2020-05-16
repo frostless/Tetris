@@ -29,12 +29,12 @@
     })();
   }
 
-  GameArea.prototype.initComponent = function (speedY) {
+  GameArea.prototype.initComponent = function () {
     this.componentNo = this.componentNo === -1 ? getRandomInt(0, 6) : this.componentNo;
     let x = this.x + this.width / 2;
     let y = this.y;
 
-    this.component = this.componentFactory.initComponent(this.componentNo, x, y, speedY);
+    this.component = this.componentFactory.initComponent(this.componentNo, x, y);
   };
 
   GameArea.prototype.drawNextComponent = function () {
@@ -54,9 +54,8 @@
 
     x = this.x + this.width + this.statusAreaWidth / 2;
     let y = this.y + height;
-    let speedY = 0; // no need for speedY
    
-    let component = this.componentFactory.initComponentDrawing(this.componentNo, x, y, speedY);
+    let component = this.componentFactory.initComponentDrawing(this.componentNo, x, y);
 
     component.coordinates.forEach((item) => {
       if(item[2] === 0){
@@ -114,19 +113,22 @@
   };;
 
   GameArea.prototype.updateComponent = function () {
+    let bottomY = this.y + this.height - 1;
+    this.component.update(bottomY, this.matrix);
+  };
+
+  GameArea.prototype.changeCompHorizontalSpeed = function (speedX) {
+    if (this.component.done) return;
     // -1 because canvas starts from 1 but matrix from 0
     let boundaryLeft = this.x;
     let boundaryRight = this.x + this.width - 1;
-    let bottomY = this.y + this.height - 1;
-    this.component.update(boundaryLeft, boundaryRight, bottomY, this.matrix);
+    this.eraseComponent();
+    this.component.changeHorizontalSpeed(speedX, this.matrix, boundaryLeft, boundaryRight)
+    this.drawComponent();
   };
 
-  GameArea.prototype.changeCompHoriSpeed = function (speedX, speedY) {
-    this.component.changeHoriSpeed(speedX, speedY)
-  };
-
-  GameArea.prototype.changeCompVertSpeed = function (speedY) {
-    this.component.changeVertSpeed(speedY)
+  GameArea.prototype.reverseCompHorizontalSpeed = function () {
+    this.component.revertHorizontalSpeed();
   };
 
   GameArea.prototype.updateScoreBoard = function (score) {

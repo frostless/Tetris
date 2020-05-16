@@ -1,17 +1,17 @@
 (function () {
     "use strict";
   
-    function ZShapeComponent(x, y, width, height, speedY, basicLength) {
+    function ZShapeComponent(x, y, width, height, basicLength) {
       this.width = width;
       this.height = height;
-      this.speedY = speedY;
+      this.speedY = basicLength;
       this.basicLength = basicLength;
       this.done = false;
   
       (() => {
        // combination of two Rectangle componets
-       this.rectangleComponent1 = new RectangleComponent(x - basicLength, y, basicLength * 2, basicLength, speedY, basicLength);
-       this.rectangleComponent2 = new RectangleComponent(x, y + height / 2 , basicLength *  2, basicLength, speedY, basicLength);
+       this.rectangleComponent1 = new RectangleComponent(x - basicLength, y, basicLength * 2, basicLength, basicLength);
+       this.rectangleComponent2 = new RectangleComponent(x, y + height / 2 , basicLength *  2, basicLength, basicLength);
        this.coordinates = this.rectangleComponent1.coordinates.concat(this.rectangleComponent2.coordinates);
       })();
     }
@@ -40,35 +40,17 @@
     ZShapeComponent.prototype.getBottomRightCoord = function () {
     };
   
-    ZShapeComponent.prototype.update = function (boundaryLeft, boundaryRight, bottomY, matrix) {
-      let newSpeedX = 0;
+    ZShapeComponent.prototype.update = function (bottomY, matrix) {
       let newSpeedY = 0;
   
-      if (this.rectangleComponent1.speedX > 0) {
-        // 1: Check if crash right
-        this.rectangleComponent1.checkCrashRight(boundaryRight, matrix);
-        this.rectangleComponent2.checkCrashRight(boundaryRight, matrix);
-        newSpeedX = Math.min(this.rectangleComponent1.speedX, this.rectangleComponent2.speedX);
-      }
-  
-      if (this.rectangleComponent1.speedX < 0) {
-        // 2: Check if crash left
-        this.rectangleComponent1.checkCrashLeft(boundaryLeft, matrix);
-        this.rectangleComponent2.checkCrashLeft(boundaryLeft, matrix);
-        newSpeedX = Math.max(this.rectangleComponent1.speedX, this.rectangleComponent2.speedX);
-      }
-  
-      // 3: check if crash into bottom
-        this.rectangleComponent1.checkCrashBottom(boundaryLeft, boundaryRight, bottomY, matrix);
-        this.rectangleComponent2.checkCrashBottom(boundaryLeft, boundaryRight, bottomY, matrix);
+        this.rectangleComponent1.checkCrashBottom(bottomY, matrix);
+        this.rectangleComponent2.checkCrashBottom(bottomY, matrix);
   
         newSpeedY = Math.min(this.rectangleComponent1.speedY, this.rectangleComponent2.speedY);
   
         this.done = this.rectangleComponent1.done || this.rectangleComponent2.done;
   
-        this.rectangleComponent1.speedX = newSpeedX;
         this.rectangleComponent1.speedY = newSpeedY;
-        this.rectangleComponent2.speedX = newSpeedX;
         this.rectangleComponent2.speedY = newSpeedY;
   
       // update pos
@@ -76,17 +58,26 @@
       this.rectangleComponent2.updateCoord();
     };
   
-    ZShapeComponent.prototype.changeHoriSpeed = function (speedX, speedY) {
-      this.rectangleComponent1.speedX = speedX;
-      this.rectangleComponent1.speedY = speedY;
-      this.rectangleComponent2.speedX = speedX;
-      this.rectangleComponent2.speedY = speedY;
+    ZShapeComponent.prototype.changeHorizontalSpeed = function (speedX, matrix, boundaryLeft, boundaryRight) {
+      if (speedX > 0) {
+        this.rectangleComponent1.checkCrashRight(speedX, boundaryRight, matrix);
+        this.rectangleComponent2.checkCrashRight(speedX, boundaryRight, matrix);
+        let x = Math.min(this.rectangleComponent1.speedX, this.rectangleComponent2.speedX);
+        this.rectangleComponent1.updateX(x);
+        this.rectangleComponent2.updateX(x);
+      } else {
+        this.rectangleComponent1.checkCrashLeft(speedX, boundaryLeft, matrix);
+        this.rectangleComponent2.checkCrashLeft(speedX, boundaryLeft, matrix);
+        let x = Math.max(this.rectangleComponent1.speedX, this.rectangleComponent2.speedX);
+        this.rectangleComponent1.updateX(x);
+        this.rectangleComponent2.updateX(x);
+      }
     }
-  
-    ZShapeComponent.prototype.changeVertSpeed = function (speedY) {
-      this.rectangleComponent1.speedY = speedY;
-      this.rectangleComponent2.speedY = speedY;
-    }
+
+    ZShapeComponent.prototype.revertHorizontalSpeed = function () {
+      this.rectangleComponent1.revertHorizontalSpeed();
+      this.rectangleComponent2.revertHorizontalSpeed();
+   }
   
     ZShapeComponent.prototype.isGameOver = function (boundaryTop) {
       return this.rectangleComponent1.isGameOver(boundaryTop) || this.rectangleComponent2.isGameOver(boundaryTop)
