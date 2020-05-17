@@ -94,7 +94,7 @@
     };
 
     GameConsole.prototype.updateLevel = function () {
-      this.level = Math.floor(this.score / 100);
+      this.level = Math.floor(this.score / 100) + 1;
     };
 
     GameConsole.prototype.update = async function () {
