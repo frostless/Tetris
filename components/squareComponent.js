@@ -66,7 +66,7 @@
           // crash into other components or canvas
           // get the smallest speedX
           if (coordX + j === boundaryRight + 1 ||
-                (matrix[coordX + j][coordY] && matrix[coordX + j][coordY][0] === 1 )) {
+              (matrix[coordX + j][coordY] && matrix[coordX + j][coordY][0] === 1)) {
             smallestSpeedX = j - 1;
           }
         }

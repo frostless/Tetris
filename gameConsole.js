@@ -126,6 +126,7 @@
         let tetrix = this.gameArea.tetris();
         if (tetrix) {
           clearInterval(this.interval); // wait
+          this.interval = null;
           await this.gameArea.showTetrixEffects(600); // wait for effects to finish
           
           this.score += this.gameArea.updateTetris();
@@ -136,6 +137,8 @@
 
           this.gameArea.updateLevel(this.level);
           this.gameArea.updateScoreBoard(this.score);
+
+          this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
         }    
 
         // check game status
