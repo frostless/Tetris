@@ -15,7 +15,10 @@
     GameConsole.prototype.start = function () {
         this.gameArea.initCanvas();
         this.gameArea.initComponent();
+        this.gameArea.drawComponent();
         this.gameArea.drawNextComponent();
+        this.gameArea.updateLevel(this.level);
+        this.gameArea.updateScoreBoard(this.score);
         this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
     };
 
@@ -112,24 +115,27 @@
       }
     };
 
-    GameConsole.prototype.update = function () {
+    GameConsole.prototype.update = async function () {
       // Game Over
       if (this.gameOver)
         return;
-
-      this.gameArea.updateLevel(this.level);
-      this.gameArea.updateScoreBoard(this.score);
 
       if (this.gameArea.isComponentDone()) {
         this.gameArea.updateMatrix();
 
         let tetrix = this.gameArea.tetris();
         if (tetrix) {
+          clearInterval(this.interval); // wait
+          await this.gameArea.showTetrixEffects(600); // wait for effects to finish
+          
           this.score += this.gameArea.updateTetris();
           this.updateLevel();
           this.gameArea.clearCanvas();
           this.gameArea.redrawMatrix();
           this.updateGameSpeed();
+
+          this.gameArea.updateLevel(this.level);
+          this.gameArea.updateScoreBoard(this.score);
         }    
 
         // check game status

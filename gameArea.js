@@ -12,7 +12,7 @@
     this.basicLength = width / 10; // the length of the smallest building block
     this.componentNo = -1;
     this.borderColor = 'white';
-    this.seperatorColo = '#d3d3d3';
+    this.seperatorColor = '#d3d3d3';
 
     // coordinates for the game first index; 0 not taken, 1 taken, 2 tetris
     // second index: 0 not border, 1 border
@@ -76,7 +76,7 @@
     let y = this.y;
     let width = 1;
     let height = this.y + this.height;
-    this.drawer.fillRect(x, y, width, height, this.seperatorColo);
+    this.drawer.fillRect(x, y, width, height, this.seperatorColor);
   };
 
   GameArea.prototype.clearCanvas = function () {
@@ -240,6 +240,49 @@
         }
       }
     }
+  };
+
+  GameArea.prototype.showTetrix = function () {
+    let matrixLength = this.matrix.length;
+    let matrixHeight = this.matrix[0].length;
+    for (let i = 0; i < matrixLength; i++) {
+      for (let j = 0; j < matrixHeight; j++) {
+        if (this.matrix[i][j][0] === 2) {
+          if(this.matrix[i][j][1] === 0) {
+            this.drawer.fillRect(i, j, 1, 1);
+          } else {
+            this.drawer.fillRect(i, j, 1, 1, this.borderColor);
+          }
+        }
+      }
+    }
+  };
+
+  GameArea.prototype.hideTetrix = function () {
+    let matrixLength = this.matrix.length;
+    let matrixHeight = this.matrix[0].length;
+    for (let i = 0; i < matrixLength; i++) {
+      for (let j = 0; j < matrixHeight; j++) {
+        if (this.matrix[i][j][0] === 2) {
+          this.drawer.clearRect(i, j, 1, 1);
+        }
+      }
+    }
+  };
+
+  GameArea.prototype.showTetrixEffects = function (ms) {
+    let msEach = ms / 6;
+    return new Promise((resolve, reject) => {
+      setTimeout(this.hideTetrix.bind(this), msEach);
+      setTimeout(this.showTetrix.bind(this), msEach * 2);
+      setTimeout(this.hideTetrix.bind(this), msEach * 3);
+      setTimeout(this.showTetrix.bind(this), msEach * 4);
+      setTimeout(this.hideTetrix.bind(this), msEach * 5);
+      setTimeout(() => {
+        this.showTetrix();
+        resolve();
+      }, msEach * 6);
+    });
   };
 
   GameArea.prototype.tetris = function () {

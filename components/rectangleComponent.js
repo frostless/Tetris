@@ -106,7 +106,8 @@
         for (let j = 1; j <= smallestSpeedY; j++) {
             // crash into other components or canvas
             // get the smallest speedy
-            if (coordY + j === bottomY + 1 || matrix[coordX][coordY + j][0] === 1) {
+            if (coordY + j === bottomY + 1 || 
+                (matrix[coordX][coordY + j] && matrix[coordX][coordY + j][0] === 1)) {
             this.done = this.speedX === 0; // allow more horizontal manevure, more like the original game
             smallestSpeedY = j - 1;
             }
