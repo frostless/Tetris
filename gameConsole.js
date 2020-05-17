@@ -94,25 +94,7 @@
     };
 
     GameConsole.prototype.updateLevel = function () {
-      if (this.score >= 900) {
-        this.level = 10;
-      } else if (this.score >= 800) {
-        this.level = 9;
-      } else if (this.score >= 700) {
-        this.level = 8;
-      } else if (this.score >= 600) {
-        this.level = 7;
-      } else if (this.score >= 500) {
-        this.level = 6;
-      } else if (this.score >= 400) {
-        this.level = 5;
-      } else if (this.score >= 300) {
-        this.level = 4;
-      } else if (this.score >= 200) {
-        this.level = 3;
-      } else if (this.score >= 100) {
-        this.level = 2;
-      }
+      this.level = Math.floor(this.score / 100);
     };
 
     GameConsole.prototype.update = async function () {
