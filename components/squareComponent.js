@@ -147,7 +147,7 @@
     }
   
     SquareComponent.prototype.isGameOver = function (boundaryTop) {
-      return this.coordinates[0][1] <= boundaryTop;
+      return this.getTopLeftCoord()[1] <= boundaryTop;
     }
 
     window.SquareComponent = SquareComponent || {};

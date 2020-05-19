@@ -8,7 +8,6 @@
         this.speedX = speedX;
         this.level = 1; // game level starts at 0
         this.score = 0;
-        this.gameOver = false;
         this.currentGameSpeed = gameSpeed;
     }
 
@@ -24,9 +23,10 @@
 
     GameConsole.prototype.turnleft = function () {
       this.gameArea.changeCompHorizontalSpeed(-this.speedX);
+
       if (this.currentGameSpeed === this.getGameSpeedSlow()) return;
       if (this.interval) {
-        clearInterval(this.interval);
+        this.cancelLoop();
         this.interval = setInterval(this.update.bind(this), this.getGameSpeedSlow());
       }
     };
@@ -36,21 +36,21 @@
 
       if (this.currentGameSpeed === this.getGameSpeedSlow()) return;
       if (this.interval) {
-        clearInterval(this.interval);
+        this.cancelLoop();
         this.interval = setInterval(this.update.bind(this), this.getGameSpeedSlow());
       }
     };
 
     GameConsole.prototype.accelerate = function () {
       if (this.interval) {
-        clearInterval(this.interval);
+        this.cancelLoop();
         this.interval = setInterval(this.update.bind(this), this.maxGameSpeed);
       }
     };
 
     GameConsole.prototype.reverYSpeed = function () {
       if (this.interval) {
-        clearInterval(this.interval);
+        this.cancelLoop();
         this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
       }
     };
@@ -58,7 +58,7 @@
     GameConsole.prototype.reverXSpeed = function () {
       this.gameArea.reverseCompHorizontalSpeed();
       if (this.interval) {
-        clearInterval(this.interval);
+        this.cancelLoop();
         this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
       }
     };
@@ -69,8 +69,7 @@
 
     GameConsole.prototype.toggleStatus = function () {
       if (this.interval) {
-        clearInterval(this.interval);
-        this.interval = null;
+       this.cancelLoop();
       } else {
         this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
       }
@@ -86,9 +85,14 @@
       return this.currentGameSpeed;
     };
 
+    GameConsole.prototype.cancelLoop = function () {
+        clearInterval(this.interval);
+        this.interval = null;
+    };
+
     GameConsole.prototype.updateGameSpeed = function () {
       if (this.interval) {
-        clearInterval(this.interval);
+        this.cancelLoop();
         this.interval = setInterval(this.update.bind(this), this.getGameSpeed());
       }
     };
@@ -98,17 +102,12 @@
     };
 
     GameConsole.prototype.update = async function () {
-      // Game Over
-      if (this.gameOver)
-        return;
-
       if (this.gameArea.isComponentDone()) {
         this.gameArea.updateMatrix();
 
         let tetrix = this.gameArea.tetris();
         if (tetrix) {
-          clearInterval(this.interval); // wait
-          this.interval = null;
+          this.cancelLoop(); // wait
           await this.gameArea.showTetrixEffects(600); // wait for effects to finish
           
           this.score += this.gameArea.updateTetris();
@@ -124,7 +123,13 @@
         }    
 
         // check game status
-        this.gameOver = this.gameArea.isGameOver();
+        const gameOver = this.gameArea.isGameOver();
+
+        // game over
+        if (gameOver) {
+          this.cancelLoop();
+          return;
+        }
 
         this.gameArea.initComponent();
         this.gameArea.drawComponent();
